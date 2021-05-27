@@ -33,7 +33,8 @@ from torch import FloatTensor
 from tqdm import tqdm
 
 from project.utils.constants import HSAAC_DIM, DEFAULT_HSAAC, AMINO_ACIDS, AMINO_ACID_IDX, MAX_NODES_PER_JOB, \
-    PSAIA_COLUMNS, PDB_PARSER, DEFAULT_DATASET_STATISTICS, NODE_COUNT_LIMIT, RCSB_BASE_URL, FEAT_COLS, ALLOWABLE_FEATS
+    PSAIA_COLUMNS, PDB_PARSER, DEFAULT_DATASET_STATISTICS, ATOM_COUNT_LIMIT, RCSB_BASE_URL, FEAT_COLS, ALLOWABLE_FEATS, \
+    DEFAULT_MISSING_FEAT_VALUE
 
 try:
     from types import SliceType
@@ -483,7 +484,7 @@ def get_hsaac_for_pdb_residues(residues, similarity_matrix):
 
 def get_dssp_value_for_residue(dssp_dict: dict, feature: str, chain: str, residue: int):
     """Return a secondary structure (SS) value or a relative solvent accessibility (RSA) value for a given chain-residue pair."""
-    dssp_value = '-' if feature == 'SS' else 0.0  # Initialize to default DSSP feature value
+    dssp_value = '-' if feature == 'SS' else DEFAULT_MISSING_FEAT_VALUE  # Initialize to default DSSP feature value
     try:
         if feature == 'SS':
             dssp_values = dssp_dict[chain, (' ', residue, ' ')]
@@ -498,7 +499,7 @@ def get_dssp_value_for_residue(dssp_dict: dict, feature: str, chain: str, residu
 
 def get_msms_rd_value_for_residue(rd_dict: dict, chain: str, residue: int):
     """Return an alpha-carbon residue depth (RD) value for a given chain-residue pair."""
-    ca_depth_value = 0.0  # Initialize to default RD value
+    ca_depth_value = DEFAULT_MISSING_FEAT_VALUE  # Initialize to default RD value
     try:
         rd_value, ca_depth_value = rd_dict[chain, (' ', residue, ' ')]
     except Exception:
@@ -508,7 +509,7 @@ def get_msms_rd_value_for_residue(rd_dict: dict, chain: str, residue: int):
 
 def get_protrusion_index_for_residue(psaia_df: pd.DataFrame, chain: str, residue: int):
     """Return a protrusion index for a given chain-residue pair."""
-    protrusion_index = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # Initialize to default protrusion index
+    protrusion_index = [DEFAULT_MISSING_FEAT_VALUE for _ in range(6)]  # Initialize to default protrusion index
     try:
         protrusion_index = psaia_df.loc[(chain, str(residue))].to_list()
     except Exception:
@@ -518,7 +519,7 @@ def get_protrusion_index_for_residue(psaia_df: pd.DataFrame, chain: str, residue
 
 def get_hsaac_for_residue(hsaac_matrix: np.array, residue_counter: int, chain: str, residue_id: int):
     """Return a half-sphere amino acid composition (HSAAC) for a given chain-residue pair."""
-    hsaac = np.array([0.0 for _ in range(21)])  # Initialize to default HSAAC value
+    hsaac = np.array([DEFAULT_MISSING_FEAT_VALUE for _ in range(21)])  # Initialize to default HSAAC value
     try:
         hsaac = hsaac_matrix[:, residue_counter]
         hsaac /= hsaac.sum()  # Normalize s.t. values sum to 1
@@ -530,7 +531,7 @@ def get_hsaac_for_residue(hsaac_matrix: np.array, residue_counter: int, chain: s
 
 def get_cn_value_for_residue(cn_values: np.array, residue_counter: int, chain: str, residue_id: int):
     """Return a coordinate number value for a given chain-residue pair."""
-    cn_value = 0  # Initialize to default HSAAC value
+    cn_value = DEFAULT_MISSING_FEAT_VALUE  # Initialize to default HSAAC value
     try:
         cn_value = cn_values[residue_counter]
     except Exception:
@@ -540,7 +541,7 @@ def get_cn_value_for_residue(cn_values: np.array, residue_counter: int, chain: s
 
 def get_sequence_feats_for_residue(sequence_feats_df: pd.DataFrame, chain: str, residue_id: int):
     """Return all pre-generated sequence features (from profile HMM) for a given chain-residue pair."""
-    sequence_feats = np.array([0.0 for _ in range(30)])  # Initialize to default sequence features
+    sequence_feats = np.array([DEFAULT_MISSING_FEAT_VALUE for _ in range(30)])  # Initialize to default sequence features
     try:
         # Sequence features start at the 5th column
         sequence_feats = sequence_feats_df[sequence_feats_df['chain'].apply(
@@ -551,23 +552,19 @@ def get_sequence_feats_for_residue(sequence_feats_df: pd.DataFrame, chain: str, 
     return sequence_feats
 
 
-def get_norm_vec_for_residue(df: pd.DataFrame, row: pd.Series, chain: str, residue_id: int):
+def get_norm_vec_for_residue(df: pd.DataFrame, ca_atom: pd.Series, chain: str, residue_id: int):
     """Return a normal vector for a given residue."""
-    norm_vec = [0.0, 0.0, 0.0]  # Initialize to default norm vec value
+    norm_vec = [DEFAULT_MISSING_FEAT_VALUE for _ in range(3)]  # Initialize to default norm vec value
     try:
         # Calculate normal vector for each residue's amide plane using relative coords of each Ca-Cb and Cb-N bond
-        cb_atom = df[(df.chain == row.chain) &
-                     (df.residue == row.residue) &
+        cb_atom = df[(df.chain == ca_atom.chain) &
+                     (df.residue == ca_atom.residue) &
                      (df.atom_name == 'CB')]
-        o_atom = df[(df.chain == row.chain) &
-                    (df.residue == row.residue) &
-                    (df.atom_name == 'O')]
-        n_atom = df[(df.chain == row.chain) &
-                    (df.residue == row.residue) &
+        n_atom = df[(df.chain == ca_atom.chain) &
+                    (df.residue == ca_atom.residue) &
                     (df.atom_name == 'N')]
-        non_ca_or_n_bond_atom = cb_atom if len(cb_atom) > 0 else o_atom  # Use available bond atom, either CB or O
-        vec1 = row[['x', 'y', 'z']].to_numpy() - non_ca_or_n_bond_atom[['x', 'y', 'z']].to_numpy()
-        vec2 = non_ca_or_n_bond_atom[['x', 'y', 'z']].to_numpy() - n_atom[['x', 'y', 'z']].to_numpy()
+        vec1 = ca_atom[['x', 'y', 'z']].to_numpy() - cb_atom[['x', 'y', 'z']].to_numpy()
+        vec2 = cb_atom[['x', 'y', 'z']].to_numpy() - n_atom[['x', 'y', 'z']].to_numpy()
         norm_vec = np.cross(vec1, vec2)
     except Exception:
         logging.info("No normal vector entry found for {:}".format(chain, (' ', residue_id, ' ')))
@@ -575,25 +572,23 @@ def get_norm_vec_for_residue(df: pd.DataFrame, row: pd.Series, chain: str, resid
 
 
 def postprocess_pruned_pairs(raw_pdb_dir: str, external_feats_dir: str, pair_filename: str,
-                             output_filename: str, source_type: str, ca_only: bool, full_run: bool):
+                             output_filename: str, source_type: str):
     """Check if underlying PDB file for pair_filename contains DSSP-derivable features. If yes, postprocess its derived features and write them into three separate output_filenames. Otherwise, delete it if it is already in output_filename."""
     output_file_exists = os.path.exists(output_filename)
     pair, raw_pdb_filenames, should_keep = __should_keep_postprocessed(raw_pdb_dir, pair_filename, source_type)
     if should_keep:
-        postprocessed_pair = postprocess_pruned_pair(raw_pdb_filenames, external_feats_dir, pair, ca_only, source_type)
-        if full_run:
-            if not output_file_exists:
-                # Write into output_filenames if not exist
-                with open(output_filename, 'wb') as f:
-                    pickle.dump(postprocessed_pair, f)
+        postprocessed_pair = postprocess_pruned_pair(raw_pdb_filenames, external_feats_dir, pair, source_type)
+        if not output_file_exists:
+            # Write into output_filenames if not exist
+            with open(output_filename, 'wb') as f:
+                pickle.dump(postprocessed_pair, f)
     else:
-        if full_run and output_file_exists:
+        if output_file_exists:
             # Delete the output_filenames
             os.remove(output_filename)
 
 
-def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: str,
-                            original_pair, ca_only: bool, source_type: str):
+def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: str, original_pair, source_type: str):
     """Construct a new Pair consisting of residues of structures with DSSP-derivable features and append DSSP secondary structure (SS) features to each protein structure dataframe as well."""
     df0_ss_values, df0_rsa_values, df0_rd_values, df0_protrusion_indices, \
     df0_hsaacs, df0_cn_values, df0_sequence_feats, df0_amide_norm_vecs, \
@@ -654,9 +649,7 @@ def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: st
     df0_sequence_feats_df = sequence_feats_dfs[0]
 
     # Add SS and RSA values to the residues in the first dataframe, df0, of a pair of dataframes
-    df0: pd.DataFrame = original_pair.df0[original_pair.df0['atom_name'].apply(lambda x: x == 'CA')] \
-        if ca_only \
-        else original_pair.df0
+    df0: pd.DataFrame = original_pair.df0
 
     # Iterate through each residue in the first structure and collect extracted features for training and reporting
     residue_counter = 0
@@ -743,9 +736,7 @@ def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: st
     df1_sequence_feats_df = sequence_feats_dfs[0] if single_raw_pdb_file_provided else sequence_feats_dfs[1]
 
     # Add SS and RSA values to the residues in the second dataframe, df1, of a pair of dataframes
-    df1: pd.DataFrame = original_pair.df1[original_pair.df1['atom_name'].apply(lambda x: x == 'CA')] \
-        if ca_only \
-        else original_pair.df1
+    df1: pd.DataFrame = original_pair.df1
 
     # Iterate through each residue in the second structure and collect extracted features for training and reporting
     residue_counter = 0
@@ -1121,8 +1112,8 @@ def __should_keep_postprocessed(raw_pdb_dir: str, pair_filename: str, source_typ
         pair_dssp_dict = get_dssp_dict_for_pdb_file(raw_pdb_filenames[i])
         if not pair_dssp_dict and source_type != 'db5':
             return pair, raw_pdb_filenames[i], False  # Discard pair missing DSSP-derivable secondary structure features
-        if pair.df0.shape[0] > NODE_COUNT_LIMIT or pair.df1.shape[0] > NODE_COUNT_LIMIT:  # N/A for residue-level struct
-            return pair, raw_pdb_filenames[i], False  # Discard pair exceeding residue limit to reduce comp. complexity
+        if pair.df0.shape[0] > ATOM_COUNT_LIMIT or pair.df1.shape[0] > ATOM_COUNT_LIMIT:
+            return pair, raw_pdb_filenames[i], False  # Discard pair exceeding atom count limit to reduce comp. complex.
     return pair, raw_pdb_filenames, True
 
 

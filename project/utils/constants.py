@@ -17,9 +17,12 @@ DB5_TEST_PDB_CODES = ['2VXT', '2W9E', '3EOA', '3HMX', '3MXW',
                       '4JCV', '3FN1', '3H11', '4GAM', '1RKE',
                       '3AAD', '3F1P', '3L89']
 
-# Dataset-global node count limit to restrict computational learning complexity
-NODE_COUNT_LIMIT = 50000  # Default filter for both datasets when encoding complexes at a residue-based level
+# Dataset-global node count limits to restrict computational learning complexity
+ATOM_COUNT_LIMIT = 10000  # Default filter for both datasets when encoding complexes at an atom-based level
 DEFAULT_MAX_SEQ_LENGTH = 1000  # Default filter for sequence length of complexes when creating filename partitions
+
+# Default fill value for missing features
+DEFAULT_MISSING_FEAT_VALUE = 'x'
 
 # Cluster-specific limit to the number of compute nodes available to each Slurm job
 MAX_NODES_PER_JOB = 4
@@ -55,8 +58,8 @@ AMINO_ACIDS = 'ACDEFGHIKLMNPQRSTVWY-'
 AMINO_ACID_IDX = dict(zip(AMINO_ACIDS, range(len(AMINO_ACIDS))))
 
 # HSAAC constants
-HSAAC_DIM = 21
-DEFAULT_HSAAC = [0.0 for _ in range(HSAAC_DIM)]
+HSAAC_DIM = 42
+DEFAULT_HSAAC = [DEFAULT_MISSING_FEAT_VALUE for _ in range(HSAAC_DIM)]
 
 # Features to be one-hot encoded during graph processing and what their values could be
 FEAT_COLS = [

@@ -20,10 +20,8 @@ from project.utils.utils import postprocess_pruned_pairs
 @click.option('--rank', '-r', default=0)
 @click.option('--size', '-s', default=1)
 @click.option('--source_type', default='rcsb', type=click.Choice(['rcsb', 'db5']))
-@click.option('--ca_only/--all_atoms', default=True)
-@click.option('--full_run/--dry_run', default=True)
 def main(raw_pdb_dir: str, pruned_pairs_dir: str, external_feats_dir: str, output_dir: str,
-         num_cpus: int, rank: int, size: int, source_type: str, ca_only: bool, full_run: bool):
+         num_cpus: int, rank: int, size: int, source_type: str):
     """Run postprocess_pruned_pairs on all provided complexes."""
     # Reestablish global rank
     rank = get_global_node_rank(rank, size)
@@ -65,7 +63,7 @@ def main(raw_pdb_dir: str, pruned_pairs_dir: str, external_feats_dir: str, outpu
         output_filenames.append(new_output_filename)
 
     # Collect thread inputs
-    inputs = [(raw_pdb_dir, external_feats_dir, i, o, source_type, ca_only, full_run)
+    inputs = [(raw_pdb_dir, external_feats_dir, i, o, source_type)
               for i, o in zip(work_filenames, output_filenames)]
     submit_jobs(postprocess_pruned_pairs, inputs, num_cpus)
 

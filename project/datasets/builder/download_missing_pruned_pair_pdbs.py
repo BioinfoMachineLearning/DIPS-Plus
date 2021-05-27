@@ -17,7 +17,7 @@ from project.utils.utils import get_global_node_rank, download_missing_pruned_pa
 @click.option('--rank', '-r', default=0)
 @click.option('--size', '-s', default=1)
 def main(output_dir: str, pruned_pairs_dir: str, num_cpus: int, rank: int, size: int):
-    """Run postprocess_pruned_pairs on all provided complexes."""
+    """Download missing pruned pair PDB files."""
     # Reestablish global rank
     rank = get_global_node_rank(rank, size)
     logger = logging.getLogger(__name__)

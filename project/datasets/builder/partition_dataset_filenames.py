@@ -21,7 +21,7 @@ from project.utils.utils import get_global_node_rank
 @click.option('--rank', '-r', default=0)
 @click.option('--size', '-s', default=1)
 def main(output_dir: str, source_type: str, filter_by_seq_length: bool, max_seq_length: int, rank: int, size: int):
-    """Run postprocess_pruned_pairs on all provided complexes."""
+    """Partition dataset filenames."""
     # Reestablish global rank
     rank = get_global_node_rank(rank, size)
 

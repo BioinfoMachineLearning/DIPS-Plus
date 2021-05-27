@@ -1068,6 +1068,36 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
         pickle.dump(feature_imputed_pair, f)
 
 
+def add_atoms_to_pairs(pruned_pairs_dir: str, input_pair_filename: str, output_pair_filename: str):
+    """Impute missing feature values in a postprocessed dataset."""
+    # Look at a .dill file in the given output directory
+    postprocessed_pair: pa.Pair = pd.read_pickle(input_pair_filename)
+
+    # -------------
+    # DataFrame 0
+    # -------------
+
+    # Grab first structure's DataFrame and its columns of interest
+    df0: pd.DataFrame = postprocessed_pair.df0[postprocessed_pair.df0['atom_name'].apply(lambda x: x == 'CA')]
+
+    # -------------
+    # DataFrame 1
+    # -------------
+
+    # Grab second structure's DataFrame and its columns of interest
+    df1: pd.DataFrame = postprocessed_pair.df1[postprocessed_pair.df1['atom_name'].apply(lambda x: x == 'CA')]
+
+    # Reconstruct a feature-imputed Pair representing a complex of interacting proteins
+    feature_imputed_pair = pa.Pair(complex=postprocessed_pair.complex, df0=df0, df1=df1,
+                                   pos_idx=postprocessed_pair.pos_idx, neg_idx=postprocessed_pair.neg_idx,
+                                   srcs=postprocessed_pair.srcs, id=postprocessed_pair.id,
+                                   sequences=postprocessed_pair.sequences)
+
+    # Write into current pair_filename
+    with open(output_pair_filename, 'wb') as f:
+        pickle.dump(feature_imputed_pair, f)
+
+
 def get_raw_pdb_filename_from_interim_filename(interim_filename: str, raw_pdb_dir: str, source_type: str):
     """Get raw pdb filename from interim filename."""
     pdb_name = interim_filename

@@ -48,4 +48,4 @@ srun python "$PROJDIR"/project/datasets/builder/postprocess_pruned_pairs.py "$PR
 python "$PROJDIR"/project/datasets/builder/partition_dataset_filenames.py "$PROJDIR"/project/datasets/DIPS/final/raw --source_type rcsb --filter_by_seq_length True --max_seq_length 1000 --rank "$1" --size "$2"
 python "$PROJDIR"/project/datasets/builder/collect_dataset_statistics.py "$PROJDIR"/project/datasets/DIPS/final/raw --rank "$1" --size "$2"
 python "$PROJDIR"/project/datasets/builder/impute_missing_feature_values.py "$PROJDIR"/project/datasets/DIPS/final/raw --num_cpus 32 --rank "$1" --size "$2"
-
+python "$PROJDIR"/project/datasets/builder/add_atoms_to_pairs.py "$PROJDIR"/project/datasets/DIPS/interim/pairs-pruned "$PROJDIR"/project/datasets/DIPS/final/raw --num_cpus 32 --rank "$1" --size "$2"

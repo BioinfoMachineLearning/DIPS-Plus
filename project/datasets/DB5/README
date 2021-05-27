@@ -1,0 +1,24 @@
+Cleaned up version of Docking Benchmark 5 (https://zlab.umassmed.edu/benchmark/). 
+
+Released with "End-to-End Learning on 3D Protein Structure for Interface Prediction."
+by Raphael J.L. Townshend, Rishi Bedi, Patricia Suriana, Ron O. Dror
+https://arxiv.org/abs/1807.01297
+
+Specifically, bound chains and residue indexes were aligned across unbound and bound complexes.
+
+A total of 230 binary protein complexes are included.
+
+Processing code to regenerate and use the provided tfrecords is located at
+https://github.com/drorlab/DIPS
+
+MANIFEST
+
+raw/            - All pre-aligned and cleaned DB5 structures, organized into directories 
+                  with individual files for ligand-unbound, ligand-bound, receptor-unbound, 
+                  receptor-bound.
+interim/
+    parsed/     - All DB5 structures processed to pickled dataframes.
+    complexes/  - List of all possible pairs in parsed.
+    pairs/      - Dill files of individual pairs listed in complexes.
+processed/
+    tfrecords/  - pairs converted to tfrecords.

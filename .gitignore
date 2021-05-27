@@ -134,7 +134,6 @@ project/datasets/DIPS/final/raw (copy)
 
 # DB5
 project/datasets/DB5/processed
-project/datasets/DB5/README
 project/datasets/DB5/raw/**
 project/datasets/DB5/interim/**
 project/datasets/DB5/final/raw

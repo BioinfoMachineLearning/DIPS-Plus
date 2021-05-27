@@ -4,7 +4,7 @@ from Bio.PDB.Polypeptide import CaPPBuilder
 # From where we can get bound PDB complexes
 RCSB_BASE_URL = 'ftp://ftp.wwpdb.org/pub/pdb/data/biounit/coordinates/divided/'
 
-# The PDB codes of structures added between DB4 and DB5 (to be used for as testing dataset)
+# The PDB codes of structures added between DB4 and DB5 (to be used for testing dataset)
 DB5_TEST_PDB_CODES = ['2VXT', '2W9E', '3EOA', '3HMX', '3MXW',
                       '3RVW', '4DN4', '4FQI', '4G6J', '4G6M',
                       '4GXU', '1JTD', '2A1A', '2GAF', '2YVJ',

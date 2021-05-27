@@ -89,8 +89,7 @@ python3 project/datasets/builder/generate_hhsuite_features.py "$PROJDIR"/project
 python3 project/datasets/builder/download_missing_pruned_pair_pdbs.py "$PROJDIR"/project/datasets/DIPS/raw/pdb "$PROJDIR"/project/datasets/DIPS/interim/pairs-pruned --num_cpus 32 --rank "$1" --size "$2"
 python3 project/datasets/builder/postprocess_pruned_pairs.py "$PROJDIR"/project/datasets/DIPS/raw/pdb "$PROJDIR"/project/datasets/DIPS/interim/pairs-pruned "$PROJDIR"/project/datasets/DIPS/interim/external_feats "$PROJDIR"/project/datasets/DIPS/final/raw --num_cpus 32 --full-run
 
-# Downsample negative class, partition dataset filenames, aggregate statistics, and impute missing features
-python3 project/datasets/builder/downsample_negative_class.py "$PROJDIR"/project/datasets/DIPS/final/raw --source_type rcsb --num_cpus 32 --rank "$1" --size "$2"
+# Partition dataset filenames, aggregate statistics, and impute missing features
 python3 project/datasets/builder/partition_dataset_filenames.py "$PROJDIR"/project/datasets/DIPS/final/raw --source_type rcsb --filter_by_seq_length True --max_seq_length 1000 --rank "$1" --size "$2"
 python3 project/datasets/builder/collect_dataset_statistics.py "$PROJDIR"/project/datasets/DIPS/final/raw --rank "$1" --size "$2"
 python3 project/datasets/builder/impute_missing_feature_values.py "$PROJDIR"/project/datasets/DIPS/final/raw --num_cpus 32 --rank "$1" --size "$2"
@@ -126,8 +125,7 @@ python3 project/datasets/builder/generate_hhsuite_features.py "$PROJDIR"/project
 # Add new features to the filtered pairs:
 python3 project/datasets/builder/postprocess_pruned_pairs.py "$PROJDIR"/project/datasets/DB5/raw "$PROJDIR"/project/datasets/DB5/interim/pairs "$PROJDIR"/project/datasets/DB5/interim/external_feats "$PROJDIR"/project/datasets/DB5/final/raw --num_cpus 32 --source_type db5 --full-run
 
-# Prepackage labels, partition dataset filenames, aggregate statistics, and impute missing features
-python3 project/datasets/builder/downsample_negative_class.py "$PROJDIR"/project/datasets/DB5/final/raw --source_type rcsb --num_cpus 32 --rank "$1" --size "$2"
+# Partition dataset filenames, aggregate statistics, and impute missing features
 python3 project/datasets/builder/partition_dataset_filenames.py "$PROJDIR"/project/datasets/DB5/final/raw --source_type db5 --rank "$1" --size "$2"
 python3 project/datasets/builder/collect_dataset_statistics.py "$PROJDIR"/project/datasets/DB5/final/raw --rank "$1" --size "$2"
 python3 project/datasets/builder/impute_missing_feature_values.py "$PROJDIR"/project/datasets/DB5/final/raw --num_cpus 32 --rank "$1" --size "$2"
@@ -162,8 +160,8 @@ block in the Unpickler class' find_class() function
 ```
 @article{DIPS-Plus,
   title={DIPS-Plus: The Enhanced Database of Interacting Protein Structures},
-  author={Morehead, Alex, Chen, Chen, and Cheng, Jianlin},
-  journal={NeurIPS},
+  author={Alex Morehead, Chen Chen, Ada Sedova, and Jianlin Cheng},
+  journal={Datasets of Machine Learning Research},
   year={2021}
 }
 ```

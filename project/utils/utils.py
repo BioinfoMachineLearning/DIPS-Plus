@@ -825,50 +825,13 @@ def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: st
     return pair
 
 
-def downsample_negative_class(input_pair_filename: str, output_pair_filename: str, source_type: str):
-    """Downsample instances of the negative class a priori (i.e. before training) and generate new labels matrix."""
-    # Retrieve complex
-    postprocessed_pair: pa.Pair = pd.read_pickle(input_pair_filename)
-    df0 = postprocessed_pair.df0
-    df1 = postprocessed_pair.df1
-
-    if source_type.lower() == 'rcsb':
-        # Find unique residue row IDs from positive and negative class
-        df0_idx = np.unique(np.concatenate((postprocessed_pair.pos_idx[:, 0], postprocessed_pair.neg_idx[:, 0])))
-        df1_idx = np.unique(np.concatenate((postprocessed_pair.pos_idx[:, 1], postprocessed_pair.neg_idx[:, 1])))
-
-        # Drop DataFrame rows (representing residues and all their atoms) not in pos_idx or neg_idx
-        df0 = postprocessed_pair.df0.loc[postprocessed_pair.df0.index.isin(df0_idx)]
-        df1 = postprocessed_pair.df1.loc[postprocessed_pair.df1.index.isin(df1_idx)]
-
-    # Derive cross-protein node (i.e. residue) interaction matrix (Interacting = 1 and Non-Interacting = 0)
-    labels = torch.zeros((len(df0), len(df1)))
-    for idx in postprocessed_pair.pos_idx:
-        row1_row_num = df0.loc[[idx[0]]].index[0]
-        row2_row_num = df1.loc[[idx[1]]].index[0]
-        idx1 = df0.index.get_loc(row1_row_num)
-        idx2 = df1.index.get_loc(row2_row_num)
-        labels[idx1][idx2] = 1
-
-    # Reconstruct a negative-class-downsampled Pair representing a complex of interacting proteins
-    negative_class_downsampled_pair = pa.PairWithLabels(complex=postprocessed_pair.complex, df0=df0, df1=df1,
-                                                        pos_idx=postprocessed_pair.pos_idx,
-                                                        neg_idx=postprocessed_pair.neg_idx,
-                                                        srcs=postprocessed_pair.srcs, id=postprocessed_pair.id,
-                                                        sequences=postprocessed_pair.sequences, labels=labels)
-
-    # Write into current pair_filename
-    with open(output_pair_filename, 'wb') as f:
-        pickle.dump(negative_class_downsampled_pair, f)
-
-
 def collect_dataset_statistics(output_dir: str):
     """Aggregate statistics for a postprocessed dataset."""
     dataset_statistics = DEFAULT_DATASET_STATISTICS
     # Look at each .dill file in the given output directory
     pair_filenames = [pair_filename.as_posix() for pair_filename in Path(output_dir).rglob('*.dill')]
     for i in tqdm(range(len(pair_filenames))):
-        postprocessed_pair: pa.PairWithLabels = pd.read_pickle(pair_filenames[i])
+        postprocessed_pair: pa.Pair = pd.read_pickle(pair_filenames[i])
 
         # Keep track of how many complexes have already been postprocessed
         dataset_statistics['num_of_processed_complexes'] += 1
@@ -944,7 +907,7 @@ def determine_na_fill_value(column):
 def impute_missing_feature_values(input_pair_filename: str, output_pair_filename: str):
     """Impute missing feature values in a postprocessed dataset."""
     # Look at a .dill file in the given output directory
-    postprocessed_pair: pa.PairWithLabels = pd.read_pickle(input_pair_filename)
+    postprocessed_pair: pa.Pair = pd.read_pickle(input_pair_filename)
 
     # -------------
     # DataFrame 0
@@ -1095,10 +1058,10 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
             """)
 
     # Reconstruct a feature-imputed Pair representing a complex of interacting proteins
-    feature_imputed_pair = pa.PairWithLabels(complex=postprocessed_pair.complex, df0=df0, df1=df1,
-                                             pos_idx=postprocessed_pair.pos_idx, neg_idx=postprocessed_pair.neg_idx,
-                                             srcs=postprocessed_pair.srcs, id=postprocessed_pair.id,
-                                             sequences=postprocessed_pair.sequences, labels=postprocessed_pair.labels)
+    feature_imputed_pair = pa.Pair(complex=postprocessed_pair.complex, df0=df0, df1=df1,
+                                   pos_idx=postprocessed_pair.pos_idx, neg_idx=postprocessed_pair.neg_idx,
+                                   srcs=postprocessed_pair.srcs, id=postprocessed_pair.id,
+                                   sequences=postprocessed_pair.sequences)
 
     # Write into current pair_filename
     with open(output_pair_filename, 'wb') as f:

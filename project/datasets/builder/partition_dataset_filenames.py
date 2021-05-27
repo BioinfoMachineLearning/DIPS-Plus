@@ -43,7 +43,7 @@ def main(output_dir: str, source_type: str, filter_by_seq_length: bool, max_seq_
         for pair_filename in tqdm(pair_filenames):
             struct_id = pair_filename.as_posix().split(os.sep)[-2]
             if filter_by_seq_length and source_type.lower() == 'rcsb':
-                postprocessed_pair: pa.PairWithLabels = pd.read_pickle(pair_filename)
+                postprocessed_pair: pa.Pair = pd.read_pickle(pair_filename)
                 if len(postprocessed_pair.df0) < max_seq_length and len(postprocessed_pair.df1) < max_seq_length:
                     with open(pairs_postprocessed_txt, 'a') as f:
                         path, filename = os.path.split(pair_filename.as_posix())

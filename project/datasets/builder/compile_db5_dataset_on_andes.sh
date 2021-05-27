@@ -25,26 +25,21 @@ source "$PROJDIR"/miniconda3/bin/activate
 # Load CUDA module for DGL
 module load cuda/10.2.89
 
-# Perform a R/W-enabled run of postprocessing
-full_run=true
-
 # Run dataset compilation scripts
 cd "$PROJDIR"/project || exit
-if [ "$full_run" = true ]; then
-  wget -O "$PROJDIR"/project/datasets/DB5.tar.gz https://dataverse.harvard.edu/api/access/datafile/:persistentId?persistentId=doi:10.7910/DVN/H93ZKK/BXXQCG
-  tar -xzf "$PROJDIR"/project/datasets/DB5.tar.gz --directory "$PROJDIR"/project/datasets/
-  rm "$PROJDIR"/project/datasets/DB5.tar.gz "$PROJDIR"/project/datasets/DB5/.README.swp
-  rm -rf "$PROJDIR"/project/datasets/DB5/interim "$PROJDIR"/project/datasets/DB5/processed
-  mkdir "$PROJDIR"/project/datasets/DB5/interim "$PROJDIR"/project/datasets/DB5/interim/external_feats "$PROJDIR"/project/datasets/DB5/interim/external_feats/PSAIA "$PROJDIR"/project/datasets/DB5/interim/external_feats/PSAIA/DB5 "$PROJDIR"/project/datasets/DB5/final "$PROJDIR"/project/datasets/DB5/final/raw
+wget -O "$PROJDIR"/project/datasets/DB5.tar.gz https://dataverse.harvard.edu/api/access/datafile/:persistentId?persistentId=doi:10.7910/DVN/H93ZKK/BXXQCG
+tar -xzf "$PROJDIR"/project/datasets/DB5.tar.gz --directory "$PROJDIR"/project/datasets/
+rm "$PROJDIR"/project/datasets/DB5.tar.gz "$PROJDIR"/project/datasets/DB5/.README.swp
+rm -rf "$PROJDIR"/project/datasets/DB5/interim "$PROJDIR"/project/datasets/DB5/processed
+mkdir "$PROJDIR"/project/datasets/DB5/interim "$PROJDIR"/project/datasets/DB5/interim/external_feats "$PROJDIR"/project/datasets/DB5/interim/external_feats/PSAIA "$PROJDIR"/project/datasets/DB5/interim/external_feats/PSAIA/DB5 "$PROJDIR"/project/datasets/DB5/final "$PROJDIR"/project/datasets/DB5/final/raw
 
-  python "$PROJDIR"/project/datasets/builder/make_dataset.py "$PROJDIR"/project/datasets/DB5/raw "$PROJDIR"/project/datasets/DB5/interim --num_cpus 32 --rank "$1" --size "$2" --source_type db5
-  python "$PROJDIR"/project/datasets/builder/generate_psaia_features.py "$PSAIADIR" "$PROJDIR"/project/datasets/builder/psaia_config_file_db5.txt "$PROJDIR"/project/datasets/DB5/raw "$PROJDIR"/project/datasets/DB5/interim/parsed "$PROJDIR"/project/datasets/DB5/interim/parsed "$PROJDIR"/project/datasets/DB5/interim/external_feats --source_type db5 --rank "$1" --size "$2"
-  srun python "$PROJDIR"/project/datasets/builder/generate_hhsuite_features.py "$PROJDIR"/project/datasets/DB5/interim/parsed "$PROJDIR"/project/datasets/DB5/interim/parsed "$HHSUITE_DB" "$PROJDIR"/project/datasets/DB5/interim/external_feats --rank "$1" --size "$2" --num_cpu_jobs 4 --num_cpus_per_job 8 --num_iter 2 --source_type db5 --write_file
-  srun python "$PROJDIR"/project/datasets/builder/postprocess_pruned_pairs.py "$PROJDIR"/project/datasets/DB5/raw "$PROJDIR"/project/datasets/DB5/interim/pairs "$PROJDIR"/project/datasets/DB5/interim/external_feats "$PROJDIR"/project/datasets/DB5/final/raw --num_cpus 32 --rank "$1" --size "$2" --source_type db5
-  python "$PROJDIR"/project/datasets/builder/downsample_negative_class.py "$PROJDIR"/project/datasets/DB5/final/raw --source_type db5 --num_cpus 32 --rank "$1" --size "$2"
-  python "$PROJDIR"/project/datasets/builder/partition_dataset_filenames.py "$PROJDIR"/project/datasets/DB5/final/raw --source_type db5 --rank "$1" --size "$2"
-  python "$PROJDIR"/project/datasets/builder/collect_dataset_statistics.py "$PROJDIR"/project/datasets/DB5/final/raw --rank "$1" --size "$2"
-  python "$PROJDIR"/project/datasets/builder/impute_missing_feature_values.py "$PROJDIR"/project/datasets/DB5/final/raw --num_cpus 32 --rank "$1" --size "$2"
-else
-  srun python "$PROJDIR"/project/datasets/builder/postprocess_pruned_pairs.py "$PROJDIR"/project/datasets/DB5/raw "$PROJDIR"/project/datasets/DB5/interim/pairs "$PROJDIR"/project/datasets/DB5/interim/external_feats "$PROJDIR"/project/datasets/DB5/final/raw --num_cpus 32 --rank "$1" --size "$2" --source_type db5 --dry_run
-fi
+python "$PROJDIR"/project/datasets/builder/make_dataset.py "$PROJDIR"/project/datasets/DB5/raw "$PROJDIR"/project/datasets/DB5/interim --num_cpus 32 --rank "$1" --size "$2" --source_type db5
+
+python "$PROJDIR"/project/datasets/builder/generate_psaia_features.py "$PSAIADIR" "$PROJDIR"/project/datasets/builder/psaia_config_file_db5.txt "$PROJDIR"/project/datasets/DB5/raw "$PROJDIR"/project/datasets/DB5/interim/parsed "$PROJDIR"/project/datasets/DB5/interim/parsed "$PROJDIR"/project/datasets/DB5/interim/external_feats --source_type db5 --rank "$1" --size "$2"
+srun python "$PROJDIR"/project/datasets/builder/generate_hhsuite_features.py "$PROJDIR"/project/datasets/DB5/interim/parsed "$PROJDIR"/project/datasets/DB5/interim/parsed "$HHSUITE_DB" "$PROJDIR"/project/datasets/DB5/interim/external_feats --rank "$1" --size "$2" --num_cpu_jobs 4 --num_cpus_per_job 8 --num_iter 2 --source_type db5 --write_file
+
+srun python "$PROJDIR"/project/datasets/builder/postprocess_pruned_pairs.py "$PROJDIR"/project/datasets/DB5/raw "$PROJDIR"/project/datasets/DB5/interim/pairs "$PROJDIR"/project/datasets/DB5/interim/external_feats "$PROJDIR"/project/datasets/DB5/final/raw --num_cpus 32 --rank "$1" --size "$2" --source_type db5
+
+python "$PROJDIR"/project/datasets/builder/partition_dataset_filenames.py "$PROJDIR"/project/datasets/DB5/final/raw --source_type db5 --rank "$1" --size "$2"
+python "$PROJDIR"/project/datasets/builder/collect_dataset_statistics.py "$PROJDIR"/project/datasets/DB5/final/raw --rank "$1" --size "$2"
+python "$PROJDIR"/project/datasets/builder/impute_missing_feature_values.py "$PROJDIR"/project/datasets/DB5/final/raw --num_cpus 32 --rank "$1" --size "$2"

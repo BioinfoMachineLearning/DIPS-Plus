@@ -2,6 +2,13 @@ import numpy as np
 from Bio.PDB.PDBParser import PDBParser
 from Bio.PDB.Polypeptide import CaPPBuilder
 
+# Cluster-specific limit to the number of compute nodes available to each Slurm job
+MAX_NODES_PER_JOB = 4
+
+# Dataset-global node count limits to restrict computational learning complexity
+ATOM_COUNT_LIMIT = 17500  # Default filter for both datasets when encoding complexes at an atom-based level
+DEFAULT_MAX_SEQ_LENGTH = 3000  # Default filter for sequence length of complexes when creating filename partitions
+
 # From where we can get bound PDB complexes
 RCSB_BASE_URL = 'ftp://ftp.wwpdb.org/pub/pdb/data/biounit/coordinates/divided/'
 
@@ -17,13 +24,6 @@ DB5_TEST_PDB_CODES = ['2VXT', '2W9E', '3EOA', '3HMX', '3MXW',
                       '3BX7', '3DAW', '3R9A', '3SZK', '3S9D',
                       '4JCV', '3FN1', '3H11', '4GAM', '1RKE',
                       '3AAD', '3F1P', '3L89']
-
-# Dataset-global node count limits to restrict computational learning complexity
-ATOM_COUNT_LIMIT = 12000  # Default filter for both datasets when encoding complexes at an atom-based level
-DEFAULT_MAX_SEQ_LENGTH = 1000  # Default filter for sequence length of complexes when creating filename partitions
-
-# Cluster-specific limit to the number of compute nodes available to each Slurm job
-MAX_NODES_PER_JOB = 4
 
 # Postprocessing logger dictionary
 DEFAULT_DATASET_STATISTICS = dict(num_of_processed_complexes=0, num_of_df0_residues=0, num_of_df1_residues=0,

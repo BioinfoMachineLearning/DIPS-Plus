@@ -611,12 +611,19 @@ def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: st
     structures, residues_list, dssp_dicts, rd_dicts, psaia_dfs, similarity_matrices, \
     coordinate_numbers_list, hsaac_matrices, sequence_feats_dfs = [], [], [], [], [], [], [], [], []
     for i, raw_pdb_filename in enumerate(raw_pdb_filenames):
+        if source_type.lower() == 'rcsb':
+            # Derive FASTA filename
+            raw_pdb_filename = derive_rcsb_fasta_filename(i, raw_pdb_filename, original_pair)
+
         # Extract the FASTA sequence(s) for a given PDB file
         sequences = find_fasta_sequences_for_pdb_file(sequences, raw_pdb_filename, external_feats_dir)
 
         # Derive BioPython structure and residues for the given PDB file
-        structures.append(PDB_PARSER.get_structure(original_pair.complex, raw_pdb_filename))  # Parse provided PDB file
+        structures.append(PDB_PARSER.get_structure(original_pair.complex, raw_pdb_filename)) \
+            if i == 0 else None  # Parse provided PDB file
         residues_list.append(Selection.unfold_entities(structures[i], 'R'))  # List of residues
+
+        i = 0  # RCSB binary complexes have only one structure filename
 
         # Extract secondary structure (SS) and relative solvent accessibility (RSA) values for each PDB model using DSSP
         dssp_dicts.append(
@@ -854,24 +861,24 @@ def collect_dataset_statistics(output_dir: str):
         # DataFrame 0
         # -------------
 
-        # Grab first structure's DataFrame
+        # Grab first structure's DataFrame (CA atoms by default)
         df0: pd.DataFrame = postprocessed_pair.df0[postprocessed_pair.df0['atom_name'].apply(lambda x: x == 'CA')]
 
         # Increment feature counters
         dataset_statistics['num_of_df0_interface_residues'] += len(postprocessed_pair.pos_idx[:, 0])
         dataset_statistics['num_of_valid_df0_ss_values'] += len(df0[df0['ss_value'] != '-'])
-        dataset_statistics['num_of_valid_df0_rsa_values'] += len(df0[df0['rsa_value'] > 0.0])
-        dataset_statistics['num_of_valid_df0_rd_values'] += len(df0[df0['rd_value'] > 0.0])
-        num_nonzero_protrusion_indices = len(df0[(df0['avg_cx'] != 0.0) & (df0['s_avg_cx'] != 0.0)
-                                                 & (df0['s_ch_avg_cx'] != 0.0) & (df0['s_ch_s_avg_cx'] != 0.0)
-                                                 & (df0['max_cx'] != 0.0) & (df0['min_cx'] != 0.0)])
+        dataset_statistics['num_of_valid_df0_rsa_values'] += len(df0[~df0['rsa_value'].isna()])
+        dataset_statistics['num_of_valid_df0_rd_values'] += len(df0[~df0['rd_value'].isna()])
+        num_nonzero_protrusion_indices = len(df0[(~df0['avg_cx'].isna()) & (~df0['s_avg_cx'].isna())
+                                                 & (~df0['s_ch_avg_cx'].isna()) & (~df0['s_ch_s_avg_cx'].isna())
+                                                 & (~df0['max_cx'].isna()) & (~df0['min_cx'].isna())])
         dataset_statistics['num_of_valid_df0_protrusion_indices'] += num_nonzero_protrusion_indices
         for hsaac_array in df0['hsaac']:
-            if np.count_nonzero(hsaac_array) != 0:
+            if (np.count_nonzero(hsaac_array) - np.sum(np.isnan(hsaac_array))) > 0:  # np.count_nonzero includes NaNs
                 dataset_statistics['num_of_valid_df0_hsaacs'] += 1
-        dataset_statistics['num_of_valid_df0_cn_values'] += len(df0[df0['cn_value'] > 0])
+        dataset_statistics['num_of_valid_df0_cn_values'] += len(df0[~df0['cn_value'].isna()])
         for sequence_array in df0['sequence_feats']:
-            if np.count_nonzero(sequence_array) != 0:
+            if (np.count_nonzero(sequence_array) - np.sum(np.isnan(sequence_array.astype(np.float)))) > 0:
                 dataset_statistics['num_of_valid_df0_sequence_feats'] += 1
 
         # Increment total residue count for first structure
@@ -881,24 +888,24 @@ def collect_dataset_statistics(output_dir: str):
         # DataFrame 1
         # -------------
 
-        # Grab second structure's DataFrame
+        # Grab second structure's DataFrame (CA atoms by default)
         df1: pd.DataFrame = postprocessed_pair.df1[postprocessed_pair.df1['atom_name'].apply(lambda x: x == 'CA')]
 
         # Increment feature counters
         dataset_statistics['num_of_df1_interface_residues'] += len(postprocessed_pair.pos_idx[:, 1])
         dataset_statistics['num_of_valid_df1_ss_values'] += len(df1[df1['ss_value'] != '-'])
-        dataset_statistics['num_of_valid_df1_rsa_values'] += len(df1[df1['rsa_value'] > 0.0])
-        dataset_statistics['num_of_valid_df1_rd_values'] += len(df1[df1['rd_value'] > 0.0])
-        num_nonzero_protrusion_indices = len(df1[(df1['avg_cx'] != 0.0) & (df1['s_avg_cx'] != 0.0)
-                                                 & (df1['s_ch_avg_cx'] != 0.0) & (df1['s_ch_s_avg_cx'] != 0.0)
-                                                 & (df1['max_cx'] != 0.0) & (df1['min_cx'] != 0.0)])
+        dataset_statistics['num_of_valid_df1_rsa_values'] += len(df1[~df1['rsa_value'].isna()])
+        dataset_statistics['num_of_valid_df1_rd_values'] += len(df1[~df1['rd_value'].isna()])
+        num_nonzero_protrusion_indices = len(df1[(~df1['avg_cx'].isna()) & (~df1['s_avg_cx'].isna())
+                                                 & (~df1['s_ch_avg_cx'].isna()) & (~df1['s_ch_s_avg_cx'].isna())
+                                                 & (~df1['max_cx'].isna()) & (~df1['min_cx'].isna())])
         dataset_statistics['num_of_valid_df1_protrusion_indices'] += num_nonzero_protrusion_indices
         for hsaac_array in df1['hsaac']:
-            if np.count_nonzero(hsaac_array) != 0:
+            if (np.count_nonzero(hsaac_array) - np.sum(np.isnan(hsaac_array))) > 0:  # np.count_nonzero includes NaNs
                 dataset_statistics['num_of_valid_df1_hsaacs'] += 1
-        dataset_statistics['num_of_valid_df1_cn_values'] += len(df1[df1['cn_value'] > 0])
+        dataset_statistics['num_of_valid_df1_cn_values'] += len(df1[~df1['cn_value'].isna()])
         for sequence_array in df1['sequence_feats']:
-            if np.count_nonzero(sequence_array) != 0:
+            if (np.count_nonzero(sequence_array) - np.sum(np.isnan(sequence_array.astype(np.float)))) > 0:
                 dataset_statistics['num_of_valid_df1_sequence_feats'] += 1
 
         # Increment total residue count for second structure
@@ -915,7 +922,7 @@ def collect_dataset_statistics(output_dir: str):
 
 def determine_na_fill_value(column):
     """Determine whether to fill NaNs in a given column with zero or with the column's calculated median."""
-    return 0 if column.isnull().sum().sum() > 10 else column.median()
+    return 0 if column.isna().sum().sum() > 10 else column.median()
 
 
 def impute_missing_feature_values(input_pair_filename: str, output_pair_filename: str):
@@ -942,11 +949,11 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
     df0_sequence_feats = pd.DataFrame(np.array([sequence_feats for sequence_feats in df0.iloc[:, 16]]))
 
     # Initially inspect whether there are missing features in the first structure
-    df0_numeric_feat_cols_have_null = df0_numeric_feat_cols.isnull().values.any()
-    df0_hsaacs_have_null = df0_hsaacs.isnull().values.any()
-    df0_cns_have_null = df0_cns.isnull().values.any()
-    df0_sequence_feats_have_null = df0_sequence_feats.isnull().values.any()
-    df0_has_null = df0.isnull().values.any()
+    df0_numeric_feat_cols_have_null = df0_numeric_feat_cols.isna().values.any()
+    df0_hsaacs_have_null = df0_hsaacs.isna().values.any()
+    df0_cns_have_null = df0_cns.isna().values.any()
+    df0_sequence_feats_have_null = df0_sequence_feats.isna().values.any()
+    df0_has_null = df0.isna().values.any()
     df0_nan_found = df0_numeric_feat_cols_have_null or \
                     df0_hsaacs_have_null or \
                     df0_cns_have_null or \
@@ -976,11 +983,11 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
     df0_sequence_feats = df0_sequence_feats.apply(lambda x: x.fillna(determine_na_fill_value(x)), axis=0)
     df0['sequence_feats'] = df0_sequence_feats.values.tolist()
 
-    df0_numeric_feat_cols_have_null = df0_numeric_feat_cols.isnull().values.any()
-    df0_hsaacs_have_null = df0_hsaacs.isnull().values.any()
-    df0_cns_have_null = df0_cns.isnull().values.any()
-    df0_sequence_feats_have_null = df0_sequence_feats.isnull().values.any()
-    df0_has_null = df0.isnull().values.any()
+    df0_numeric_feat_cols_have_null = df0_numeric_feat_cols.isna().values.any()
+    df0_hsaacs_have_null = df0_hsaacs.isna().values.any()
+    df0_cns_have_null = df0_cns.isna().values.any()
+    df0_sequence_feats_have_null = df0_sequence_feats.isna().values.any()
+    df0_has_null = df0.isna().values.any()
     df0_nan_found = df0_numeric_feat_cols_have_null or \
                     df0_hsaacs_have_null or \
                     df0_cns_have_null or \
@@ -1016,11 +1023,11 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
     df1_sequence_feats = pd.DataFrame(np.array([sequence_feats for sequence_feats in df1.iloc[:, 16]]))
 
     # Initially inspect whether there are missing features in the second structure
-    df1_numeric_feat_cols_have_null = df1_numeric_feat_cols.isnull().values.any()
-    df1_hsaacs_have_null = df1_hsaacs.isnull().values.any()
-    df1_cns_have_null = df1_cns.isnull().values.any()
-    df1_sequence_feats_have_null = df1_sequence_feats.isnull().values.any()
-    df1_has_null = df1.isnull().values.any()
+    df1_numeric_feat_cols_have_null = df1_numeric_feat_cols.isna().values.any()
+    df1_hsaacs_have_null = df1_hsaacs.isna().values.any()
+    df1_cns_have_null = df1_cns.isna().values.any()
+    df1_sequence_feats_have_null = df1_sequence_feats.isna().values.any()
+    df1_has_null = df1.isna().values.any()
     df1_nan_found = df1_numeric_feat_cols_have_null or \
                     df1_hsaacs_have_null or \
                     df1_cns_have_null or \
@@ -1050,11 +1057,11 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
     df1_sequence_feats = df1_sequence_feats.apply(lambda x: x.fillna(determine_na_fill_value(x)), axis=0)
     df1['sequence_feats'] = df1_sequence_feats.values.tolist()
 
-    df1_numeric_feat_cols_have_null = df1_numeric_feat_cols.isnull().values.any()
-    df1_hsaacs_have_null = df1_hsaacs.isnull().values.any()
-    df1_cns_have_null = df1_cns.isnull().values.any()
-    df1_sequence_feats_have_null = df1_sequence_feats.isnull().values.any()
-    df1_has_null = df1.isnull().values.any()
+    df1_numeric_feat_cols_have_null = df1_numeric_feat_cols.isna().values.any()
+    df1_hsaacs_have_null = df1_hsaacs.isna().values.any()
+    df1_cns_have_null = df1_cns.isna().values.any()
+    df1_sequence_feats_have_null = df1_sequence_feats.isna().values.any()
+    df1_has_null = df1.isna().values.any()
     df1_nan_found = df1_numeric_feat_cols_have_null or \
                     df1_hsaacs_have_null or \
                     df1_cns_have_null or \
@@ -1121,6 +1128,15 @@ def get_raw_pdb_filename_from_interim_filename(interim_filename: str, raw_pdb_di
         source_type == 'rcsb' else \
         os.path.join(raw_pdb_dir, slash_dot_tokens[0].split('_')[0], slash_dot_tokens[0]) + '.' + slash_dot_tokens[1]
     return raw_pdb_filename
+
+
+def derive_rcsb_fasta_filename(chain_idx: int, raw_pdb_filename: str, original_pair: pd.DataFrame):
+    """Get FASTA filename for an RCSB complex model-chain combination."""
+    df = original_pair.df0 if chain_idx == 0 else original_pair.df1
+    raw_rcsb_filename = os.path.split(raw_pdb_filename)
+    rcsb_fasta_filename = os.path.join(raw_rcsb_filename[0], 'work',
+                                       raw_rcsb_filename[1] + f'-{df.iloc[0]["model"]}' + f'-{df.iloc[0]["chain"]}.fa')
+    return rcsb_fasta_filename
 
 
 def __should_keep_postprocessed(raw_pdb_dir: str, pair_filename: str, source_type: str):

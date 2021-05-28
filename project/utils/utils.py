@@ -28,13 +28,16 @@ from atom3.complex import Complex
 from atom3.utils import slice_list
 from mpi4py import MPI
 from scipy import spatial
+from sklearn import preprocessing
 from sklearn.preprocessing import MinMaxScaler
 from torch import FloatTensor
 from tqdm import tqdm
 
-from project.utils.constants import HSAAC_DIM, DEFAULT_HSAAC, AMINO_ACIDS, AMINO_ACID_IDX, MAX_NODES_PER_JOB, \
-    PSAIA_COLUMNS, PDB_PARSER, DEFAULT_DATASET_STATISTICS, ATOM_COUNT_LIMIT, RCSB_BASE_URL, FEAT_COLS, ALLOWABLE_FEATS, \
-    DEFAULT_MISSING_FEAT_VALUE
+from project.utils.constants import AMINO_ACIDS, AMINO_ACID_IDX, MAX_NODES_PER_JOB, \
+    PSAIA_COLUMNS, PDB_PARSER, DEFAULT_DATASET_STATISTICS, ATOM_COUNT_LIMIT, RCSB_BASE_URL, FEAT_COLS, \
+    ALLOWABLE_FEATS, DEFAULT_MISSING_SS, DEFAULT_MISSING_PROTRUSION_INDEX, DEFAULT_MISSING_RSA, \
+    DEFAULT_MISSING_RD, DEFAULT_MISSING_HSAAC, DEFAULT_MISSING_CN, DEFAULT_MISSING_SEQUENCE_FEATS, \
+    DEFAULT_MISSING_NORM_VEC, HSAAC_DIM
 
 try:
     from types import SliceType
@@ -207,9 +210,9 @@ def one_of_k_encoding_unk(feat, allowable_set, feat_col):
         return [feat]
     elif len(allowable_set) == 1 and type(allowable_set[0]) == list and len(allowable_set[0]) == 0:  # e.g. HSAAC values
         if len(feat) == 0:
-            return [0.0 for _ in range(21)] if feat_col == 'hsaac' else []  # Else means skip encoding amide_norm_vec
+            return DEFAULT_MISSING_HSAAC if feat_col == 'hsaac' else []  # Else means skip encoding amide_norm_vec
         if feat_col == 'hsaac' and len(feat) > HSAAC_DIM:  # Handle for edge case from postprocessing
-            return np.array(DEFAULT_HSAAC)
+            return np.array(DEFAULT_MISSING_HSAAC)
         return feat if feat_col == 'hsaac' or feat_col == 'sequence_feats' else []  # Else means skip encoding amide_norm_vec as a node feature
     else:  # e.g. Residue element type values
         if feat not in allowable_set:
@@ -328,6 +331,7 @@ def get_hsacc(residues, similarity_matrix):
             DN[i] = np.nan
             UC[:, i] = np.nan
             DC[:, i] = np.nan
+            logging.info('Side chain vector not found for HSAAC')
         else:
             idx = AMINO_ACID_IDX[get_res_letter(r)]
             UC[idx, i] = UC[idx, i] + 1
@@ -473,10 +477,13 @@ def get_df_from_psaia_tbl_file(psaia_filename):
 
 def get_hsaac_for_pdb_residues(residues, similarity_matrix):
     """Run BioPython to calculate half-sphere amino acid composition (HSAAC) for a given list of PDB residues."""
-    hsaacs = np.array([DEFAULT_HSAAC for _ in range(len(residues))])  # Initialize to default HSAACs value
+    hsaacs = np.array([DEFAULT_MISSING_HSAAC for _ in range(len(residues))])  # Initialize to default HSAACs value
     try:
         UC, DC = get_hsacc(residues, similarity_matrix)
-        hsaacs = UC + DC  # Concatenate to get HSAAC
+        # Unit norm compositions separately
+        UC, DC = preprocessing.normalize(UC, norm='l2', axis=0), preprocessing.normalize(DC, norm='l2', axis=0)
+        # Concatenate to get HSAAC
+        hsaacs = np.concatenate((UC, DC))
     except Exception:
         logging.info("No half-sphere amino acid composition (HSAAC) found for {:}".format(residues))
     return hsaacs
@@ -484,7 +491,7 @@ def get_hsaac_for_pdb_residues(residues, similarity_matrix):
 
 def get_dssp_value_for_residue(dssp_dict: dict, feature: str, chain: str, residue: int):
     """Return a secondary structure (SS) value or a relative solvent accessibility (RSA) value for a given chain-residue pair."""
-    dssp_value = '-' if feature == 'SS' else DEFAULT_MISSING_FEAT_VALUE  # Initialize to default DSSP feature value
+    dssp_value = DEFAULT_MISSING_SS if feature == 'SS' else DEFAULT_MISSING_RSA  # Initialize to default DSSP feature value
     try:
         if feature == 'SS':
             dssp_values = dssp_dict[chain, (' ', residue, ' ')]
@@ -499,17 +506,17 @@ def get_dssp_value_for_residue(dssp_dict: dict, feature: str, chain: str, residu
 
 def get_msms_rd_value_for_residue(rd_dict: dict, chain: str, residue: int):
     """Return an alpha-carbon residue depth (RD) value for a given chain-residue pair."""
-    ca_depth_value = DEFAULT_MISSING_FEAT_VALUE  # Initialize to default RD value
+    ca_depth_value = DEFAULT_MISSING_RD  # Initialize to default RD value
     try:
         rd_value, ca_depth_value = rd_dict[chain, (' ', residue, ' ')]
     except Exception:
         logging.info("No MSMS residue depth entry found for {:}".format((chain, (' ', residue, ' '))))
-    return ca_depth_value
+    return ca_depth_value[0] if type(ca_depth_value) == list else ca_depth_value
 
 
 def get_protrusion_index_for_residue(psaia_df: pd.DataFrame, chain: str, residue: int):
     """Return a protrusion index for a given chain-residue pair."""
-    protrusion_index = [DEFAULT_MISSING_FEAT_VALUE for _ in range(6)]  # Initialize to default protrusion index
+    protrusion_index = DEFAULT_MISSING_PROTRUSION_INDEX  # Initialize to default protrusion index
     try:
         protrusion_index = psaia_df.loc[(chain, str(residue))].to_list()
     except Exception:
@@ -519,19 +526,18 @@ def get_protrusion_index_for_residue(psaia_df: pd.DataFrame, chain: str, residue
 
 def get_hsaac_for_residue(hsaac_matrix: np.array, residue_counter: int, chain: str, residue_id: int):
     """Return a half-sphere amino acid composition (HSAAC) for a given chain-residue pair."""
-    hsaac = np.array([DEFAULT_MISSING_FEAT_VALUE for _ in range(21)])  # Initialize to default HSAAC value
+    hsaac = np.array(DEFAULT_MISSING_HSAAC)  # Initialize to default HSAAC value
     try:
         hsaac = hsaac_matrix[:, residue_counter]
-        hsaac /= hsaac.sum()  # Normalize s.t. values sum to 1
     except Exception:
         logging.info(
             "No half-sphere amino acid composition entry found for {:}".format((chain, (' ', residue_id, ' '))))
-    return hsaac
+    return np.array(DEFAULT_MISSING_HSAAC) if len(hsaac) > HSAAC_DIM else hsaac  # Handle HSAAC parsing edge case
 
 
 def get_cn_value_for_residue(cn_values: np.array, residue_counter: int, chain: str, residue_id: int):
     """Return a coordinate number value for a given chain-residue pair."""
-    cn_value = DEFAULT_MISSING_FEAT_VALUE  # Initialize to default HSAAC value
+    cn_value = DEFAULT_MISSING_CN  # Initialize to default HSAAC value
     try:
         cn_value = cn_values[residue_counter]
     except Exception:
@@ -541,12 +547,13 @@ def get_cn_value_for_residue(cn_values: np.array, residue_counter: int, chain: s
 
 def get_sequence_feats_for_residue(sequence_feats_df: pd.DataFrame, chain: str, residue_id: int):
     """Return all pre-generated sequence features (from profile HMM) for a given chain-residue pair."""
-    sequence_feats = np.array([DEFAULT_MISSING_FEAT_VALUE for _ in range(30)])  # Initialize to default sequence features
+    sequence_feats = DEFAULT_MISSING_SEQUENCE_FEATS  # Initialize to default sequence features
     try:
-        # Sequence features start at the 5th column
+        # Sequence features start at the 5th column and end at the third-to-last column
         sequence_feats = sequence_feats_df[sequence_feats_df['chain'].apply(
             lambda x: x.strip() == chain) & sequence_feats_df['residue'].apply(
-            lambda x: x.strip() == str(residue_id))].to_numpy()[0, 4:]  # Grab first matching chain-residue pair
+            lambda x: x.strip() == str(residue_id))].to_numpy()[0, 4:-3]  # Grab first matching chain-residue pair
+        # First twenty feature entries are emission probabilities for the residue, and the last seven are its transition probabilities
     except Exception:
         logging.info("No sequence feature entries found for {:}".format((chain, (' ', residue_id, ' '))))
     return sequence_feats
@@ -554,7 +561,7 @@ def get_sequence_feats_for_residue(sequence_feats_df: pd.DataFrame, chain: str, 
 
 def get_norm_vec_for_residue(df: pd.DataFrame, ca_atom: pd.Series, chain: str, residue_id: int):
     """Return a normal vector for a given residue."""
-    norm_vec = [DEFAULT_MISSING_FEAT_VALUE for _ in range(3)]  # Initialize to default norm vec value
+    norm_vec = DEFAULT_MISSING_NORM_VEC  # Initialize to default norm vec value
     try:
         # Calculate normal vector for each residue's amide plane using relative coords of each Ca-Cb and Cb-N bond
         cb_atom = df[(df.chain == ca_atom.chain) &
@@ -568,6 +575,8 @@ def get_norm_vec_for_residue(df: pd.DataFrame, ca_atom: pd.Series, chain: str, r
         norm_vec = np.cross(vec1, vec2)
     except Exception:
         logging.info("No normal vector entry found for {:}".format(chain, (' ', residue_id, ' ')))
+    if len(norm_vec) == 0:  # Catch a missing normal vector, possibly from the residue missing a CB atom (e.g. Glycine)
+        norm_vec = DEFAULT_MISSING_NORM_VEC
     return norm_vec
 
 
@@ -654,45 +663,55 @@ def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: st
     # Iterate through each residue in the first structure and collect extracted features for training and reporting
     residue_counter = 0
     for index, row in df0.iterrows():
+        # Aggregate features for each residues' alpha-carbon (CA) atom
+        is_ca_atom = 'CA' in row.atom_name
+
         # Parse information from residue ID
         residue_id = row.residue.strip().lstrip("-+")
         residue_is_inserted = not residue_id.isdigit()
         residue_id = int(residue_id) if not residue_is_inserted else residue_id
 
         # Collect features for each residue
-        dssp_ss_value_for_residue = get_dssp_value_for_residue(df0_dssp_dict, 'SS', row.chain.strip(), residue_id)
-        dssp_rsa_value_for_residue = get_dssp_value_for_residue(df0_dssp_dict, 'RSA', row.chain.strip(), residue_id)
-        msms_rd_value_for_residue = get_msms_rd_value_for_residue(df0_rd_dict, row.chain.strip(), residue_id)
-        protrusion_index_for_residue = get_protrusion_index_for_residue(df0_psaia_df, row.chain.strip(), residue_id)
-        hsaac_for_residue = get_hsaac_for_residue(df0_hsaac_matrix, residue_counter, row.chain.strip(), residue_id)
-        cn_value_for_residue = get_cn_value_for_residue(df0_coordinate_numbers, residue_counter,
-                                                        row.chain.strip(), residue_id)
-        sequence_feats_for_residue = get_sequence_feats_for_residue(df0_sequence_feats_df,
-                                                                    row.chain.strip(), residue_id)
-        norm_vec_for_residue = get_norm_vec_for_residue(original_pair.df0, row, row.chain.strip(), residue_id)
+        dssp_ss_value_for_atom = get_dssp_value_for_residue(df0_dssp_dict, 'SS', row.chain.strip(), residue_id) \
+            if is_ca_atom else DEFAULT_MISSING_SS
+        dssp_rsa_value_for_atom = get_dssp_value_for_residue(df0_dssp_dict, 'RSA', row.chain.strip(), residue_id) \
+            if is_ca_atom else DEFAULT_MISSING_RSA
+        msms_rd_value_for_atom = get_msms_rd_value_for_residue(df0_rd_dict, row.chain.strip(), residue_id) \
+            if is_ca_atom else DEFAULT_MISSING_RD
+        protrusion_index_for_atom = get_protrusion_index_for_residue(df0_psaia_df, row.chain.strip(), residue_id) \
+            if is_ca_atom else DEFAULT_MISSING_PROTRUSION_INDEX
+        hsaac_for_atom = get_hsaac_for_residue(df0_hsaac_matrix, residue_counter, row.chain.strip(), residue_id) \
+            if is_ca_atom else DEFAULT_MISSING_HSAAC
+        cn_value_for_atom = get_cn_value_for_residue(
+            df0_coordinate_numbers, residue_counter, row.chain.strip(), residue_id) \
+            if is_ca_atom else DEFAULT_MISSING_CN
+        sequence_feats_for_atom = get_sequence_feats_for_residue(
+            df0_sequence_feats_df, row.chain.strip(), residue_id) \
+            if is_ca_atom else DEFAULT_MISSING_SEQUENCE_FEATS
+        norm_vec_for_atom = get_norm_vec_for_residue(original_pair.df0, row, row.chain.strip(), residue_id) \
+            if is_ca_atom else DEFAULT_MISSING_NORM_VEC
 
         # Handle missing normal vectors
-        if len(norm_vec_for_residue) == 0:
+        if is_ca_atom and 'x' in norm_vec_for_atom:
             logging.info(f'Normal vector missing for df0 residue {row.residue}'
                          f'in chain {row.chain} in file {df0_raw_pdf_filename}')
-            atoms = original_pair.df0[(original_pair.df0.chain == row.chain) &
-                                      (original_pair.df0.residue == row.residue)]
-            logging.info(f'\nAtoms of df0 residue with missing normal vector: {atoms}\n')
-            df0_amide_norm_vecs.append(np.array([0.0, 0.0, 0.0]))
-        else:  # Normal vector was found successfully
-            df0_amide_norm_vecs.append(norm_vec_for_residue[0])  # 2D array with a single inner array -> 1D array
+            df0_amide_norm_vecs.append(np.array(norm_vec_for_atom))
+        elif is_ca_atom:  # Normal vector was found successfully
+            df0_amide_norm_vecs.append(norm_vec_for_atom[0])  # 2D array with a single inner array -> 1D array
+        else:
+            df0_amide_norm_vecs.append(np.array(norm_vec_for_atom))
 
         # Aggregate feature values
-        df0_ss_values += dssp_ss_value_for_residue
-        df0_rsa_values.append(dssp_rsa_value_for_residue)
-        df0_rd_values.append(msms_rd_value_for_residue)
-        df0_protrusion_indices.append(protrusion_index_for_residue)
-        df0_hsaacs.append(hsaac_for_residue)
-        df0_cn_values.append(cn_value_for_residue)
-        df0_sequence_feats.append(sequence_feats_for_residue)
+        df0_ss_values += dssp_ss_value_for_atom
+        df0_rsa_values.append(dssp_rsa_value_for_atom)
+        df0_rd_values.append(msms_rd_value_for_atom)
+        df0_protrusion_indices.append(protrusion_index_for_atom)
+        df0_hsaacs.append(hsaac_for_atom)
+        df0_cn_values.append(cn_value_for_atom)
+        df0_sequence_feats.append(sequence_feats_for_atom)
 
         # Report presence of inserted residues
-        if residue_is_inserted:
+        if is_ca_atom and residue_is_inserted:
             logging.info('Found inserted df0 residue entry for residue ' + row.resname + ': '
                          + '(\'' + row.chain + '\', \'' + row.residue + '\')')
 
@@ -701,12 +720,9 @@ def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: st
             residue_counter += 1
 
     # Normalize df0 residue features to be in range [0, 1]
-    df0_rsa_values = min_max_normalize_array(np.array(df0_rsa_values).reshape(-1, 1))
     df0_rd_values = min_max_normalize_array(np.array(df0_rd_values).reshape(-1, 1))
     df0_protrusion_indices = min_max_normalize_array(np.array(df0_protrusion_indices))
     df0_cn_values = min_max_normalize_array(np.array(df0_cn_values).reshape(-1, 1))
-    df0_sequence_feats = min_max_normalize_array(np.array(df0_sequence_feats))
-    df0_sequence_feats = df0_sequence_feats.tolist()
 
     # Insert new df0 features
     df0.insert(5, 'ss_value', df0_ss_values, False)
@@ -741,59 +757,66 @@ def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: st
     # Iterate through each residue in the second structure and collect extracted features for training and reporting
     residue_counter = 0
     for index, row in df1.iterrows():
+        # Aggregate features for each residues' alpha-carbon (CA) atom
+        is_ca_atom = 'CA' in row.atom_name
+
         # Parse information from residue ID
         residue_id = row.residue.strip().lstrip("-+")
         residue_is_inserted = not residue_id.isdigit()
         residue_id = int(residue_id) if not residue_is_inserted else residue_id
 
         # Collect features for each residue
-        dssp_ss_value_for_residue = get_dssp_value_for_residue(df1_dssp_dict, 'SS', row.chain.strip(), residue_id)
-        dssp_rsa_value_for_residue = get_dssp_value_for_residue(df1_dssp_dict, 'RSA', row.chain.strip(), residue_id)
-        msms_rd_value_for_residue = get_msms_rd_value_for_residue(df1_rd_dict, row.chain.strip(), residue_id)
-        protrusion_index_for_residue = get_protrusion_index_for_residue(df1_psaia_df, row.chain.strip(), residue_id)
-        hsaac_for_residue = get_hsaac_for_residue(df1_hsaac_matrix, residue_counter, row.chain.strip(), residue_id)
-        cn_value_for_residue = get_cn_value_for_residue(df1_coordinate_numbers, residue_counter,
-                                                        row.chain.strip(), residue_id)
-        sequence_feats_for_residue = get_sequence_feats_for_residue(df1_sequence_feats_df,
-                                                                    row.chain.strip(), residue_id)
-        norm_vec_for_residue = get_norm_vec_for_residue(original_pair.df1, row, row.chain.strip(), residue_id)
+        dssp_ss_value_for_atom = get_dssp_value_for_residue(df1_dssp_dict, 'SS', row.chain.strip(), residue_id) \
+            if is_ca_atom else DEFAULT_MISSING_SS
+        dssp_rsa_value_for_atom = get_dssp_value_for_residue(df1_dssp_dict, 'RSA', row.chain.strip(), residue_id) \
+            if is_ca_atom else DEFAULT_MISSING_RSA
+        msms_rd_value_for_atom = get_msms_rd_value_for_residue(df1_rd_dict, row.chain.strip(), residue_id) \
+            if is_ca_atom else DEFAULT_MISSING_RD
+        protrusion_index_for_atom = get_protrusion_index_for_residue(df1_psaia_df, row.chain.strip(), residue_id) \
+            if is_ca_atom else DEFAULT_MISSING_PROTRUSION_INDEX
+        hsaac_for_atom = get_hsaac_for_residue(df1_hsaac_matrix, residue_counter, row.chain.strip(), residue_id) \
+            if is_ca_atom else DEFAULT_MISSING_HSAAC
+        cn_value_for_atom = get_cn_value_for_residue(
+            df1_coordinate_numbers, residue_counter, row.chain.strip(), residue_id) \
+            if is_ca_atom else DEFAULT_MISSING_CN
+        sequence_feats_for_atom = get_sequence_feats_for_residue(
+            df1_sequence_feats_df, row.chain.strip(), residue_id) \
+            if is_ca_atom else DEFAULT_MISSING_SEQUENCE_FEATS
+        norm_vec_for_atom = get_norm_vec_for_residue(original_pair.df1, row, row.chain.strip(), residue_id) \
+            if is_ca_atom else DEFAULT_MISSING_NORM_VEC
 
         # Handle missing normal vectors
-        if len(norm_vec_for_residue) == 0:
+        if is_ca_atom and 'x' in norm_vec_for_atom:
             logging.info(f'Normal vector missing for df1 residue {row.residue}'
                          f'in chain {row.chain} in file {df1_raw_pdf_filename}')
-            atoms = original_pair.df1[(original_pair.df1.chain == row.chain) &
-                                      (original_pair.df1.residue == row.residue)]
-            logging.info(f'\nAtoms of df1 residue with missing normal vector: {atoms}\n')
-            df1_amide_norm_vecs.append(np.array([0.0, 0.0, 0.0]))
-        else:  # Normal vector was found successfully
-            df1_amide_norm_vecs.append(norm_vec_for_residue[0])  # 2D array with a single inner array -> 1D array
+            df1_amide_norm_vecs.append(np.array(norm_vec_for_atom))
+        elif is_ca_atom:  # Normal vector was found successfully
+            df1_amide_norm_vecs.append(norm_vec_for_atom[0])  # 2D array with a single inner array -> 1D array
+        else:
+            df1_amide_norm_vecs.append(norm_vec_for_atom)
 
         # Aggregate feature values
-        df1_ss_values += dssp_ss_value_for_residue
-        df1_rsa_values.append(dssp_rsa_value_for_residue)
-        df1_rd_values.append(msms_rd_value_for_residue)
-        df1_protrusion_indices.append(protrusion_index_for_residue)
-        df1_hsaacs.append(hsaac_for_residue)
-        df1_cn_values.append(cn_value_for_residue)
-        df1_sequence_feats.append(sequence_feats_for_residue)
+        df1_ss_values += dssp_ss_value_for_atom
+        df1_rsa_values.append(dssp_rsa_value_for_atom)
+        df1_rd_values.append(msms_rd_value_for_atom)
+        df1_protrusion_indices.append(protrusion_index_for_atom)
+        df1_hsaacs.append(hsaac_for_atom)
+        df1_cn_values.append(cn_value_for_atom)
+        df1_sequence_feats.append(sequence_feats_for_atom)
 
         # Report presence of inserted residues
-        if residue_is_inserted:
+        if is_ca_atom and residue_is_inserted:
             logging.info('Found inserted df1 residue entry for residue ' + row.resname + ': '
                          + '(\'' + row.chain + '\', \'' + row.residue + '\')')
 
         # Increment residue counter for each alpha-carbon encountered
-        if 'CA' in row.atom_name:
+        if is_ca_atom:
             residue_counter += 1
 
     # Normalize df1 residue features to be in range [0, 1]
-    df1_rsa_values = min_max_normalize_array(np.array(df1_rsa_values).reshape(-1, 1))
     df1_rd_values = min_max_normalize_array(np.array(df1_rd_values).reshape(-1, 1))
     df1_protrusion_indices = min_max_normalize_array(np.array(df1_protrusion_indices))
     df1_cn_values = min_max_normalize_array(np.array(df1_cn_values).reshape(-1, 1))
-    df1_sequence_feats = min_max_normalize_array(np.array(df1_sequence_feats))
-    df1_sequence_feats = df1_sequence_feats.tolist()
 
     # Insert new df1 features
     df1.insert(5, 'ss_value', df1_ss_values, False)
@@ -910,8 +933,8 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
     df0_hsaacs = []
     for hsaac in df0.iloc[:, 14]:
         # Replace edge-case HSAACs with default HSAAC
-        if len(hsaac) > len(DEFAULT_HSAAC):
-            df0_hsaacs.append(DEFAULT_HSAAC)
+        if len(hsaac) > len(DEFAULT_MISSING_HSAAC):
+            df0_hsaacs.append(DEFAULT_MISSING_HSAAC)
         else:
             df0_hsaacs.append(hsaac)
     df0_hsaacs = pd.DataFrame(np.array(df0_hsaacs))
@@ -984,8 +1007,8 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
     df1_hsaacs = []
     for hsaac in df1.iloc[:, 14]:
         # Replace edge-case HSAACs with default HSAAC
-        if len(hsaac) > len(DEFAULT_HSAAC):
-            df1_hsaacs.append(DEFAULT_HSAAC)
+        if len(hsaac) > len(DEFAULT_MISSING_HSAAC):
+            df1_hsaacs.append(DEFAULT_MISSING_HSAAC)
         else:
             df1_hsaacs.append(hsaac)
     df1_hsaacs = pd.DataFrame(np.array(df1_hsaacs))

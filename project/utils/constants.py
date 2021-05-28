@@ -1,3 +1,4 @@
+import numpy as np
 from Bio.PDB.PDBParser import PDBParser
 from Bio.PDB.Polypeptide import CaPPBuilder
 
@@ -20,9 +21,6 @@ DB5_TEST_PDB_CODES = ['2VXT', '2W9E', '3EOA', '3HMX', '3MXW',
 # Dataset-global node count limits to restrict computational learning complexity
 ATOM_COUNT_LIMIT = 10000  # Default filter for both datasets when encoding complexes at an atom-based level
 DEFAULT_MAX_SEQ_LENGTH = 1000  # Default filter for sequence length of complexes when creating filename partitions
-
-# Default fill value for missing features
-DEFAULT_MISSING_FEAT_VALUE = 'x'
 
 # Cluster-specific limit to the number of compute nodes available to each Slurm job
 MAX_NODES_PER_JOB = 4
@@ -57,9 +55,17 @@ PSAIA_COLUMNS = ['avg_cx', 's_avg_cx', 's_ch_avg_cx', 's_ch_s_avg_cx', 'max_cx',
 AMINO_ACIDS = 'ACDEFGHIKLMNPQRSTVWY-'
 AMINO_ACID_IDX = dict(zip(AMINO_ACIDS, range(len(AMINO_ACIDS))))
 
-# HSAAC constants
-HSAAC_DIM = 42
-DEFAULT_HSAAC = [DEFAULT_MISSING_FEAT_VALUE for _ in range(HSAAC_DIM)]
+# Default fill values for missing features
+HSAAC_DIM = 42  # We have 2 + (2 * 20) HSAAC values from the two instances of the unknown residue symbol '-'
+DEFAULT_MISSING_FEAT_VALUE = np.nan
+DEFAULT_MISSING_SS = '-'
+DEFAULT_MISSING_RSA = DEFAULT_MISSING_FEAT_VALUE
+DEFAULT_MISSING_RD = DEFAULT_MISSING_FEAT_VALUE
+DEFAULT_MISSING_PROTRUSION_INDEX = [DEFAULT_MISSING_FEAT_VALUE for _ in range(6)]
+DEFAULT_MISSING_HSAAC = [DEFAULT_MISSING_FEAT_VALUE for _ in range(HSAAC_DIM)]
+DEFAULT_MISSING_CN = DEFAULT_MISSING_FEAT_VALUE
+DEFAULT_MISSING_SEQUENCE_FEATS = np.array([DEFAULT_MISSING_FEAT_VALUE for _ in range(27)])
+DEFAULT_MISSING_NORM_VEC = [DEFAULT_MISSING_FEAT_VALUE for _ in range(3)]
 
 # Features to be one-hot encoded during graph processing and what their values could be
 FEAT_COLS = [

@@ -375,27 +375,33 @@ def get_global_node_rank(rank, size):
     return rank
 
 
-def find_fasta_sequences_for_pdb_file(sequences: dict, pdb_file: str, external_feats_dir: str):
+def find_fasta_sequences_for_pdb_file(sequences: dict, pdb_filename: str, external_feats_dir: str,
+                                      struct_idx: int, is_rcsb_complex: bool, original_pair: pd.DataFrame):
     """Extract from previously-generated FASTA files the residue sequences for a given PDB file."""
     # Extract required paths, file lists, and sequences
-    pdb_code = db.get_pdb_code(pdb_file)[1:3]
-    pdb_full_name = db.get_pdb_name(pdb_file)
+    pdb_code = db.get_pdb_code(pdb_filename)[1:3]
+    pdb_full_name = db.get_pdb_name(pdb_filename)
     external_feats_subdir = os.path.join(external_feats_dir, pdb_code, 'work')
-    fasta_files = [os.path.join(external_feats_subdir, file) for file in os.listdir(external_feats_subdir)
-                   if pdb_full_name in file and '.fa' in file]
+    if is_rcsb_complex:  # Construct RCSB FASTA file names indirectly out of necessity
+        df = original_pair.df0 if struct_idx == 0 else original_pair.df1
+        raw_rcsb_filename = os.path.split(pdb_filename)
+        rcsb_fasta_filename = os.path.join(external_feats_subdir,
+                                           raw_rcsb_filename[1] +
+                                           f'-{df.iloc[0]["model"]}' + f'-{df.iloc[0]["chain"]}.fa')
+        fasta_files = [rcsb_fasta_filename]
+    else:  # Construct DB5 FASTA file names more directly using raw PDB filenames
+        fasta_files = [os.path.join(external_feats_subdir, file) for file in os.listdir(external_feats_subdir)
+                       if pdb_full_name in file and '.fa' in file]
 
     # Get only the first sequence from each FASTA sequence object
     sequence_list = [sequence.seq._data for fasta_file in fasta_files for sequence in SeqIO.parse(fasta_file, 'fasta')]
 
     # Give each sequence a left or right-bound key
     for fasta_file, sequence in zip(fasta_files, sequence_list):
-        shortened_fasta_filename = fasta_file.split(os.path.sep)[-1:][0]
-        if '_l_' in shortened_fasta_filename:
+        if struct_idx == 0:
             sequences['l_b'] = sequence
-        elif '_r_' in shortened_fasta_filename:
-            sequences['r_b'] = sequence
         else:
-            sequences['l_b'] = sequence  # Use l_b as the catch-all seq key for DIPS and similar bound complex datasets
+            sequences['r_b'] = sequence
     return sequences
 
 
@@ -604,52 +610,60 @@ def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: st
     df1_ss_values, df1_rsa_values, df1_rd_values, df1_protrusion_indices, \
     df1_hsaacs, df1_cn_values, df1_sequence_feats, df1_amide_norm_vecs, = [], [], [], [], [], [], [], [], \
                                                                           [], [], [], [], [], [], [], []
-    single_raw_pdb_file_provided = len(raw_pdb_filenames) == 1
+    single_raw_pdb_file_provided = len(list(set(raw_pdb_filenames))) == 1
 
     # Collect sequence and structure based features for each provided pair file (e.g. left-bound and right-bound files)
     sequences = {}
     structures, residues_list, dssp_dicts, rd_dicts, psaia_dfs, similarity_matrices, \
     coordinate_numbers_list, hsaac_matrices, sequence_feats_dfs = [], [], [], [], [], [], [], [], []
-    for i, raw_pdb_filename in enumerate(raw_pdb_filenames):
-        if source_type.lower() == 'rcsb':
-            # Derive FASTA filename
-            raw_pdb_filename = derive_rcsb_fasta_filename(i, raw_pdb_filename, original_pair)
+    for struct_idx, raw_pdb_filename in enumerate(raw_pdb_filenames):
+        is_rcsb_complex = source_type.lower() == 'rcsb'
 
         # Extract the FASTA sequence(s) for a given PDB file
-        sequences = find_fasta_sequences_for_pdb_file(sequences, raw_pdb_filename, external_feats_dir)
+        sequences = find_fasta_sequences_for_pdb_file(sequences,
+                                                      raw_pdb_filename,
+                                                      external_feats_dir,
+                                                      struct_idx,
+                                                      is_rcsb_complex,
+                                                      original_pair)
 
-        # Derive BioPython structure and residues for the given PDB file
-        structures.append(PDB_PARSER.get_structure(original_pair.complex, raw_pdb_filename)) \
-            if i == 0 else None  # Parse provided PDB file
-        residues_list.append(Selection.unfold_entities(structures[i], 'R'))  # List of residues
+        # Avoid redundant feature fetching for RCSB complexes
+        if (is_rcsb_complex and struct_idx == 0) or not is_rcsb_complex:
+            # Derive BioPython structure and residues for the given PDB file
+            structure = PDB_PARSER.get_structure(original_pair.complex, raw_pdb_filename)  # PDB structure
+            residues = Selection.unfold_entities(structure, 'R')  # List of residues
 
-        i = 0  # RCSB binary complexes have only one structure filename
+            # Extract DSSP secondary structure (SS) and relative solvent accessibility (RSA) values for the 1st model
+            dssp_dict = get_dssp_dict_for_pdb_model(structure[0], raw_pdb_filename)  # Only for 1st model
 
-        # Extract secondary structure (SS) and relative solvent accessibility (RSA) values for each PDB model using DSSP
-        dssp_dicts.append(
-            get_dssp_dict_for_pdb_model(structures[i][0], raw_pdb_filename))  # SS and RSA only for first models
+            # Extract residue depth (RD) values for each PDB model using MSMS
+            rd_dict = get_msms_rd_dict_for_pdb_model(structure[0])  # RD only retrieved for first model
 
-        # Retrieve pre-generated sequence features (i.e. profile HMMs via HH-suite3)
-        seq_file_index = 'src0' if i == 0 else 'src1'
-        file = os.path.split(original_pair.srcs[seq_file_index])[-1]
-        sequence_feats_filepath = os.path.join(external_feats_dir, db.get_pdb_code(file)[1:3], file)
-        sequence_feats_df = pd.read_pickle(sequence_feats_filepath)
-        sequence_feats_dfs.append(sequence_feats_df)
+            # Get protrusion indices using PSAIA
+            psaia_filepath = os.path.relpath(os.path.splitext(os.path.split(raw_pdb_filename)[-1])[0])
+            psaia_filename = [path for path in Path(external_feats_dir).rglob(f'{psaia_filepath}*.tbl')][0]  # 1st path
+            psaia_df = get_df_from_psaia_tbl_file(psaia_filename)
 
-        # Extract residue depth (RD) values for each PDB model using MSMS
-        rd_dicts.append(get_msms_rd_dict_for_pdb_model(structures[i][0]))  # RD only retrieved for first model
+            # Extract half-sphere exposure (HSE) statistics for each PDB model (including HSAAC and CN values)
+            similarity_matrix, coordinate_numbers = get_similarity_matrix(get_coords(residues))
+            hsaac_matrix = get_hsaac_for_pdb_residues(residues, similarity_matrix)
 
-        # Get protrusion indices using PSAIA
-        source_type = 'DIPS' if source_type.lower() == 'rcsb' else 'DB5'
-        psaia_filepath = os.path.relpath(os.path.splitext(os.path.split(raw_pdb_filename)[-1])[0])
-        psaia_filename = [path for path in Path(external_feats_dir).rglob(f'{psaia_filepath}*.tbl')][0]  # First path
-        psaia_dfs.append(get_df_from_psaia_tbl_file(psaia_filename))
+            # Retrieve pre-generated sequence features (i.e. transition and emission probabilities via HH-suite3)
+            seq_file_index = 'src0' if struct_idx == 0 else 'src1'
+            file = os.path.split(original_pair.srcs[seq_file_index])[-1]
+            sequence_feats_filepath = os.path.join(external_feats_dir, db.get_pdb_code(file)[1:3], file)
+            sequence_feats_df = pd.read_pickle(sequence_feats_filepath)
 
-        # Extract half-sphere exposure (HSE) statistics for each PDB model (including HSAAC and CN values)
-        similarity_matrix, coordinate_numbers = get_similarity_matrix(get_coords(residues_list[i]))
-        similarity_matrices.append(similarity_matrix)
-        coordinate_numbers_list.append(coordinate_numbers)
-        hsaac_matrices.append(get_hsaac_for_pdb_residues(residues_list[i], similarity_matrix))
+            # Collect gathered features for later postprocessing below
+            structures.append(structure)
+            residues_list.append(residues)
+            dssp_dicts.append(dssp_dict)
+            rd_dicts.append(rd_dict)
+            psaia_dfs.append(psaia_df)
+            coordinate_numbers_list.append(coordinate_numbers)
+            similarity_matrices.append(similarity_matrix)
+            hsaac_matrices.append(hsaac_matrix)
+            sequence_feats_dfs.append(sequence_feats_df)
 
     # -------------
     # DataFrame 0
@@ -737,8 +751,8 @@ def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: st
     df0.insert(7, 'rd_value', df0_rd_values, False)
     # Insert all protrusion index fields sequentially
     df0_col_idx = 8
-    for i, col_name in enumerate(PSAIA_COLUMNS):
-        df0.insert(df0_col_idx, col_name, df0_protrusion_indices[:, i], False)
+    for struct_idx, col_name in enumerate(PSAIA_COLUMNS):
+        df0.insert(df0_col_idx, col_name, df0_protrusion_indices[:, struct_idx], False)
         df0_col_idx += 1
     df0.insert(14, 'hsaac', df0_hsaacs, False)
     df0.insert(15, 'cn_value', df0_cn_values, False)
@@ -831,8 +845,8 @@ def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: st
     df1.insert(7, 'rd_value', df1_rd_values, False)
     # Insert all protrusion index fields sequentially
     df1_col_idx = 8
-    for i, col_name in enumerate(PSAIA_COLUMNS):
-        df1.insert(df1_col_idx, col_name, df1_protrusion_indices[:, i], False)
+    for struct_idx, col_name in enumerate(PSAIA_COLUMNS):
+        df1.insert(df1_col_idx, col_name, df1_protrusion_indices[:, struct_idx], False)
         df1_col_idx += 1
     df1.insert(14, 'hsaac', df1_hsaacs, False)
     df1.insert(15, 'cn_value', df1_cn_values, False)
@@ -1089,36 +1103,6 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
         pickle.dump(feature_imputed_pair, f)
 
 
-def add_atoms_to_pairs(pruned_pairs_dir: str, input_pair_filename: str, output_pair_filename: str):
-    """Impute missing feature values in a postprocessed dataset."""
-    # Look at a .dill file in the given output directory
-    postprocessed_pair: pa.Pair = pd.read_pickle(input_pair_filename)
-
-    # -------------
-    # DataFrame 0
-    # -------------
-
-    # Grab first structure's DataFrame and its columns of interest
-    df0: pd.DataFrame = postprocessed_pair.df0[postprocessed_pair.df0['atom_name'].apply(lambda x: x == 'CA')]
-
-    # -------------
-    # DataFrame 1
-    # -------------
-
-    # Grab second structure's DataFrame and its columns of interest
-    df1: pd.DataFrame = postprocessed_pair.df1[postprocessed_pair.df1['atom_name'].apply(lambda x: x == 'CA')]
-
-    # Reconstruct a feature-imputed Pair representing a complex of interacting proteins
-    feature_imputed_pair = pa.Pair(complex=postprocessed_pair.complex, df0=df0, df1=df1,
-                                   pos_idx=postprocessed_pair.pos_idx, neg_idx=postprocessed_pair.neg_idx,
-                                   srcs=postprocessed_pair.srcs, id=postprocessed_pair.id,
-                                   sequences=postprocessed_pair.sequences)
-
-    # Write into current pair_filename
-    with open(output_pair_filename, 'wb') as f:
-        pickle.dump(feature_imputed_pair, f)
-
-
 def get_raw_pdb_filename_from_interim_filename(interim_filename: str, raw_pdb_dir: str, source_type: str):
     """Get raw pdb filename from interim filename."""
     pdb_name = interim_filename
@@ -1128,15 +1112,6 @@ def get_raw_pdb_filename_from_interim_filename(interim_filename: str, raw_pdb_di
         source_type == 'rcsb' else \
         os.path.join(raw_pdb_dir, slash_dot_tokens[0].split('_')[0], slash_dot_tokens[0]) + '.' + slash_dot_tokens[1]
     return raw_pdb_filename
-
-
-def derive_rcsb_fasta_filename(chain_idx: int, raw_pdb_filename: str, original_pair: pd.DataFrame):
-    """Get FASTA filename for an RCSB complex model-chain combination."""
-    df = original_pair.df0 if chain_idx == 0 else original_pair.df1
-    raw_rcsb_filename = os.path.split(raw_pdb_filename)
-    rcsb_fasta_filename = os.path.join(raw_rcsb_filename[0], 'work',
-                                       raw_rcsb_filename[1] + f'-{df.iloc[0]["model"]}' + f'-{df.iloc[0]["chain"]}.fa')
-    return rcsb_fasta_filename
 
 
 def __should_keep_postprocessed(raw_pdb_dir: str, pair_filename: str, source_type: str):

@@ -19,7 +19,7 @@ DB5_TEST_PDB_CODES = ['2VXT', '2W9E', '3EOA', '3HMX', '3MXW',
                       '3AAD', '3F1P', '3L89']
 
 # Dataset-global node count limits to restrict computational learning complexity
-ATOM_COUNT_LIMIT = 10000  # Default filter for both datasets when encoding complexes at an atom-based level
+ATOM_COUNT_LIMIT = 12000  # Default filter for both datasets when encoding complexes at an atom-based level
 DEFAULT_MAX_SEQ_LENGTH = 1000  # Default filter for sequence length of complexes when creating filename partitions
 
 # Cluster-specific limit to the number of compute nodes available to each Slurm job

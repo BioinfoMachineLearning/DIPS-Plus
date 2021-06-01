@@ -611,8 +611,8 @@ def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: st
 
     # Collect sequence and structure based features for each provided pair file (e.g. left-bound and right-bound files)
     sequences = {}
-    dssp_dicts, rd_dicts, psaia_dfs, similarity_matrices, \
-    coordinate_numbers_list, hsaac_matrices, sequence_feats_dfs = [], [], [], [], [], [], []
+    dssp_dicts, rd_dicts, psaia_dfs, coordinate_numbers_list, hsaac_matrices, sequence_feats_dfs = [], [], [], \
+                                                                                                   [], [], []
     for struct_idx, raw_pdb_filename in enumerate(raw_pdb_filenames):
         is_rcsb_complex = source_type.lower() == 'rcsb'
 
@@ -659,7 +659,6 @@ def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: st
             rd_dicts.append(rd_dict)
             psaia_dfs.append(psaia_df)
             coordinate_numbers_list.append(coordinate_numbers)
-            similarity_matrices.append(similarity_matrix)
             hsaac_matrices.append(hsaac_matrix)
             sequence_feats_dfs.append(sequence_feats_df)
 

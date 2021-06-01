@@ -23,7 +23,7 @@ DB5_TEST_PDB_CODES = ['2VXT', '2W9E', '3EOA', '3HMX', '3MXW',
                       '4FZA', '4IZ7', '4LW4', '3AAA', '3AAD',
                       '3BX7', '3DAW', '3R9A', '3SZK', '3S9D',
                       '4JCV', '3FN1', '3H11', '4GAM', '1RKE',
-                      '3AAD', '3F1P', '3L89']
+                      '3AAD', '3F1P', '3L89', '1BVK', '1BGX']
 
 # Postprocessing logger dictionary
 DEFAULT_DATASET_STATISTICS = dict(num_of_processed_complexes=0, num_of_df0_residues=0, num_of_df1_residues=0,
@@ -35,7 +35,8 @@ DEFAULT_DATASET_STATISTICS = dict(num_of_processed_complexes=0, num_of_df0_resid
                                   num_of_valid_df0_protrusion_indices=0, num_of_valid_df1_protrusion_indices=0,
                                   num_of_valid_df0_hsaacs=0, num_of_valid_df1_hsaacs=0,
                                   num_of_valid_df0_cn_values=0, num_of_valid_df1_cn_values=0,
-                                  num_of_valid_df0_sequence_feats=0, num_of_valid_df1_sequence_feats=0)
+                                  num_of_valid_df0_sequence_feats=0, num_of_valid_df1_sequence_feats=0,
+                                  num_of_valid_df0_amide_normal_vecs=0, num_of_valid_df1_amide_normal_vecs=0)
 
 # Parsing utilities for PDB files (i.e. relevant for sequence and structure analysis)
 PDB_PARSER = PDBParser()

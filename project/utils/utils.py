@@ -28,7 +28,6 @@ from atom3.complex import Complex
 from atom3.utils import slice_list
 from mpi4py import MPI
 from scipy import spatial
-from sklearn import preprocessing
 from sklearn.preprocessing import MinMaxScaler
 from torch import FloatTensor
 from tqdm import tqdm
@@ -309,7 +308,7 @@ def get_similarity_matrix(coords, sg=2.0, thr=1e-3):
     return similarity_matrix, coordinate_numbers
 
 
-def get_hsacc(residues, similarity_matrix):
+def get_hsacc(residues, similarity_matrix, raw_pdb_filename):
     """
     Compute the Half sphere exposure statistics
     The up direction is defined as the direction of the side chain and is
@@ -331,7 +330,7 @@ def get_hsacc(residues, similarity_matrix):
             DN[i] = np.nan
             UC[:, i] = np.nan
             DC[:, i] = np.nan
-            logging.info('Side chain vector not found for HSAAC')
+            logging.info(f'No side chain vector found for residue #{i} in PDB file {raw_pdb_filename}')
         else:
             idx = AMINO_ACID_IDX[get_res_letter(r)]
             UC[idx, i] = UC[idx, i] + 1
@@ -405,20 +404,21 @@ def find_fasta_sequences_for_pdb_file(sequences: dict, pdb_filename: str, extern
     return sequences
 
 
-def min_max_normalize_array(features):
-    """Independently for each column, normalize array values to be in range [0, 1]."""
+def min_max_normalize_feature_array(features):
+    """Independently for each column, normalize feature array values to be in range [0, 1]."""
     scaler = MinMaxScaler()
     scaler.fit(features)
-    features = scaler.transform(features)
-    return features
+    features_scaled = scaler.transform(features)
+    return features_scaled
 
 
-def min_max_normalize_tensor(tensor):
-    """Normalize provided tensor to have values be in range [0, 1]."""
-    min_value = min(tensor)
-    max_value = max(tensor)
-    tensor = torch.tensor([(value - min_value) / (max_value - min_value) for value in tensor])
-    return tensor
+def min_max_normalize_feature_tensor(features):
+    """Normalize provided feature tensor to have its values be in range [0, 1]."""
+    min_value = min(features)
+    max_value = max(features)
+    features_std = torch.tensor([(value - min_value) / (max_value - min_value) for value in features])
+    features_scaled = features_std * (max_value - min_value) + min_value
+    return features_scaled
 
 
 def get_dssp_dict_for_pdb_file(pdb_filename):
@@ -481,17 +481,14 @@ def get_df_from_psaia_tbl_file(psaia_filename):
     return psaia_df
 
 
-def get_hsaac_for_pdb_residues(residues, similarity_matrix):
+def get_hsaac_for_pdb_residues(residues, similarity_matrix, raw_pdb_filename):
     """Run BioPython to calculate half-sphere amino acid composition (HSAAC) for a given list of PDB residues."""
     hsaacs = np.array([DEFAULT_MISSING_HSAAC for _ in range(len(residues))])  # Initialize to default HSAACs value
     try:
-        UC, DC = get_hsacc(residues, similarity_matrix)
-        # Unit norm compositions separately
-        UC, DC = preprocessing.normalize(UC, norm='l2', axis=0), preprocessing.normalize(DC, norm='l2', axis=0)
-        # Concatenate to get HSAAC
-        hsaacs = np.concatenate((UC, DC))
+        UC, DC = get_hsacc(residues, similarity_matrix, raw_pdb_filename)
+        hsaacs = np.concatenate((UC, DC))  # Concatenate to get HSAAC
     except Exception:
-        logging.info("No half-sphere amino acid composition (HSAAC) found for {:}".format(residues))
+        logging.info("No half-sphere amino acid compositions (HSAACs) found for PDB file {:}".format(raw_pdb_filename))
     return hsaacs
 
 
@@ -614,8 +611,8 @@ def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: st
 
     # Collect sequence and structure based features for each provided pair file (e.g. left-bound and right-bound files)
     sequences = {}
-    structures, residues_list, dssp_dicts, rd_dicts, psaia_dfs, similarity_matrices, \
-    coordinate_numbers_list, hsaac_matrices, sequence_feats_dfs = [], [], [], [], [], [], [], [], []
+    dssp_dicts, rd_dicts, psaia_dfs, similarity_matrices, \
+    coordinate_numbers_list, hsaac_matrices, sequence_feats_dfs = [], [], [], [], [], [], []
     for struct_idx, raw_pdb_filename in enumerate(raw_pdb_filenames):
         is_rcsb_complex = source_type.lower() == 'rcsb'
 
@@ -631,7 +628,10 @@ def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: st
         if (is_rcsb_complex and struct_idx == 0) or not is_rcsb_complex:
             # Derive BioPython structure and residues for the given PDB file
             structure = PDB_PARSER.get_structure(original_pair.complex, raw_pdb_filename)  # PDB structure
-            residues = Selection.unfold_entities(structure, 'R')  # List of residues
+            # Filter out all hetero residues including waters to leave only amino and nucleic acids
+            residues = [residue for residue in Selection.unfold_entities(structure, 'R') if residue.get_id()[0] == ' ']
+            # For RCSB (bound) complexes, remove the (redundant) last half of all residues collected (i.e. duplicates)
+            residues = residues[: len(residues) // 2]  # List of residues
 
             # Extract DSSP secondary structure (SS) and relative solvent accessibility (RSA) values for the 1st model
             dssp_dict = get_dssp_dict_for_pdb_model(structure[0], raw_pdb_filename)  # Only for 1st model
@@ -646,7 +646,7 @@ def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: st
 
             # Extract half-sphere exposure (HSE) statistics for each PDB model (including HSAAC and CN values)
             similarity_matrix, coordinate_numbers = get_similarity_matrix(get_coords(residues))
-            hsaac_matrix = get_hsaac_for_pdb_residues(residues, similarity_matrix)
+            hsaac_matrix = get_hsaac_for_pdb_residues(residues, similarity_matrix, raw_pdb_filename)
 
             # Retrieve pre-generated sequence features (i.e. transition and emission probabilities via HH-suite3)
             seq_file_index = 'src0' if struct_idx == 0 else 'src1'
@@ -655,8 +655,6 @@ def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: st
             sequence_feats_df = pd.read_pickle(sequence_feats_filepath)
 
             # Collect gathered features for later postprocessing below
-            structures.append(structure)
-            residues_list.append(residues)
             dssp_dicts.append(dssp_dict)
             rd_dicts.append(rd_dict)
             psaia_dfs.append(psaia_df)
@@ -713,7 +711,7 @@ def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: st
             if is_ca_atom else DEFAULT_MISSING_NORM_VEC
 
         # Handle missing normal vectors
-        if is_ca_atom and 'x' in norm_vec_for_atom:
+        if is_ca_atom and np.nan in norm_vec_for_atom:
             logging.info(f'Normal vector missing for df0 residue {row.residue}'
                          f'in chain {row.chain} in file {df0_raw_pdf_filename}')
             df0_amide_norm_vecs.append(np.array(norm_vec_for_atom))
@@ -741,9 +739,9 @@ def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: st
             residue_counter += 1
 
     # Normalize df0 residue features to be in range [0, 1]
-    df0_rd_values = min_max_normalize_array(np.array(df0_rd_values).reshape(-1, 1))
-    df0_protrusion_indices = min_max_normalize_array(np.array(df0_protrusion_indices))
-    df0_cn_values = min_max_normalize_array(np.array(df0_cn_values).reshape(-1, 1))
+    df0_rd_values = min_max_normalize_feature_array(np.array(df0_rd_values).reshape(-1, 1))
+    df0_protrusion_indices = min_max_normalize_feature_array(np.array(df0_protrusion_indices))
+    df0_cn_values = min_max_normalize_feature_array(np.array(df0_cn_values).reshape(-1, 1))
 
     # Insert new df0 features
     df0.insert(5, 'ss_value', df0_ss_values, False)
@@ -807,7 +805,7 @@ def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: st
             if is_ca_atom else DEFAULT_MISSING_NORM_VEC
 
         # Handle missing normal vectors
-        if is_ca_atom and 'x' in norm_vec_for_atom:
+        if is_ca_atom and np.nan in norm_vec_for_atom:
             logging.info(f'Normal vector missing for df1 residue {row.residue}'
                          f'in chain {row.chain} in file {df1_raw_pdf_filename}')
             df1_amide_norm_vecs.append(np.array(norm_vec_for_atom))
@@ -835,9 +833,9 @@ def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: st
             residue_counter += 1
 
     # Normalize df1 residue features to be in range [0, 1]
-    df1_rd_values = min_max_normalize_array(np.array(df1_rd_values).reshape(-1, 1))
-    df1_protrusion_indices = min_max_normalize_array(np.array(df1_protrusion_indices))
-    df1_cn_values = min_max_normalize_array(np.array(df1_cn_values).reshape(-1, 1))
+    df1_rd_values = min_max_normalize_feature_array(np.array(df1_rd_values).reshape(-1, 1))
+    df1_protrusion_indices = min_max_normalize_feature_array(np.array(df1_protrusion_indices))
+    df1_cn_values = min_max_normalize_feature_array(np.array(df1_cn_values).reshape(-1, 1))
 
     # Insert new df1 features
     df1.insert(5, 'ss_value', df1_ss_values, False)
@@ -894,6 +892,9 @@ def collect_dataset_statistics(output_dir: str):
         for sequence_array in df0['sequence_feats']:
             if (np.count_nonzero(sequence_array) - np.sum(np.isnan(sequence_array.astype(np.float)))) > 0:
                 dataset_statistics['num_of_valid_df0_sequence_feats'] += 1
+        for amide_normal_vec in df0['amide_norm_vec']:
+            if (np.count_nonzero(amide_normal_vec) - np.sum(np.isnan(amide_normal_vec.astype(np.float)))) > 0:
+                dataset_statistics['num_of_valid_df0_amide_normal_vecs'] += 1
 
         # Increment total residue count for first structure
         dataset_statistics['num_of_df0_residues'] += len(df0)
@@ -921,6 +922,9 @@ def collect_dataset_statistics(output_dir: str):
         for sequence_array in df1['sequence_feats']:
             if (np.count_nonzero(sequence_array) - np.sum(np.isnan(sequence_array.astype(np.float)))) > 0:
                 dataset_statistics['num_of_valid_df1_sequence_feats'] += 1
+        for amide_normal_vec in df1['amide_norm_vec']:
+            if (np.count_nonzero(amide_normal_vec) - np.sum(np.isnan(amide_normal_vec.astype(np.float)))) > 0:
+                dataset_statistics['num_of_valid_df1_amide_normal_vecs'] += 1
 
         # Increment total residue count for second structure
         dataset_statistics['num_of_df1_residues'] += len(df1)
@@ -974,7 +978,7 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
                     df0_sequence_feats_have_null or \
                     df0_has_null
     if df0_nan_found:
-        print(
+        logging.info(
             f"""Before Feature Imputation:\n
             df0 contained at least one NaN value:\n
             df0_numeric_feat_cols_have_null: {df0_numeric_feat_cols_have_null}\n
@@ -1048,7 +1052,7 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
                     df1_sequence_feats_have_null or \
                     df1_has_null
     if df1_nan_found:
-        print(
+        logging.info(
             f"""Before Feature Imputation:\n
             df1 contained at least one NaN value:\n
             df1_numeric_feat_cols_have_null: {df1_numeric_feat_cols_have_null}\n
@@ -1298,6 +1302,11 @@ def log_dataset_statistics(logger, dataset_statistics: dict):
     logger.info(f'{dataset_statistics["num_of_valid_df1_sequence_feats"]}'
                 f' valid sequence feature arrays found for df1 structures in total')
 
+    logger.info(f'{dataset_statistics["num_of_valid_df0_amide_normal_vecs"]}'
+                f' valid amide normal vectors found for df0 structures in total')
+    logger.info(f'{dataset_statistics["num_of_valid_df1_amide_normal_vecs"]}'
+                f' valid amide normal vectors found for df1 structures in total')
+
 
 def convert_df_to_dgl_graph(struct_df: pd.DataFrame, input_file: str, edge_dist_cutoff: float,
                             edge_limit: int, self_loops: bool) -> dgl.DGLGraph:
@@ -1333,7 +1342,7 @@ def convert_df_to_dgl_graph(struct_df: pd.DataFrame, input_file: str, edge_dist_
     # Relative (squared) Euclidean distance for residue pairs
     graph.edata['d'] = (graph.edata['c'] ** 2).sum(dim=-1, keepdim=True)  # [num_edges, 1]
     # Float edge weight scaled by Euclidean distance between source and destination node
-    graph.edata['w'] = min_max_normalize_tensor(graph.edata['d'])  # [num_edges, 1]
+    graph.edata['w'] = min_max_normalize_feature_tensor(graph.edata['d'])  # [num_edges, 1]
     # Angle between the two amide normal vectors for a pair of residues, for all edge-connected residue pairs
     plane1 = struct_df[['amide_norm_vec']].iloc[dsts]
     plane2 = struct_df[['amide_norm_vec']].iloc[srcs]
@@ -1346,7 +1355,7 @@ def convert_df_to_dgl_graph(struct_df: pd.DataFrame, input_file: str, edge_dist_
         for vec1, vec2 in zip(plane1, plane2)
     ])
     np.nan_to_num(angles, copy=False, nan=0.0, posinf=None, neginf=None)
-    graph.edata['a'] = min_max_normalize_tensor(torch.from_numpy(angles))
+    graph.edata['a'] = min_max_normalize_feature_tensor(torch.from_numpy(angles))
 
     # Explicitly make graph bidirectional
     graph = dgl.add_reverse_edges(graph, copy_ndata=True, copy_edata=True)

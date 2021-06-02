@@ -630,8 +630,6 @@ def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: st
             structure = PDB_PARSER.get_structure(original_pair.complex, raw_pdb_filename)  # PDB structure
             # Filter out all hetero residues including waters to leave only amino and nucleic acids
             residues = [residue for residue in Selection.unfold_entities(structure, 'R') if residue.get_id()[0] == ' ']
-            # For RCSB (bound) complexes, remove the (redundant) last half of all residues collected (i.e. duplicates)
-            residues = residues[: len(residues) // 2]  # List of residues
 
             # Extract DSSP secondary structure (SS) and relative solvent accessibility (RSA) values for the 1st model
             dssp_dict = get_dssp_dict_for_pdb_model(structure[0], raw_pdb_filename)  # Only for 1st model

@@ -92,6 +92,7 @@ python3 project/datasets/builder/postprocess_pruned_pairs.py "$PROJDIR"/project/
 # Partition dataset filenames, aggregate statistics, and impute missing features
 python3 project/datasets/builder/partition_dataset_filenames.py "$PROJDIR"/project/datasets/DIPS/final/raw --source_type rcsb --filter_by_seq_length True --max_seq_length 1000 --rank "$1" --size "$2"
 python3 project/datasets/builder/collect_dataset_statistics.py "$PROJDIR"/project/datasets/DIPS/final/raw --rank "$1" --size "$2"
+python3 project/datasets/builder/log_dataset_statistics.py "$PROJDIR"/project/datasets/DIPS/final/raw --rank "$1" --size "$2"
 python3 project/datasets/builder/impute_missing_feature_values.py "$PROJDIR"/project/datasets/DIPS/final/raw --num_cpus 32 --rank "$1" --size "$2"
 ```
 
@@ -128,6 +129,7 @@ python3 project/datasets/builder/postprocess_pruned_pairs.py "$PROJDIR"/project/
 # Partition dataset filenames, aggregate statistics, and impute missing features
 python3 project/datasets/builder/partition_dataset_filenames.py "$PROJDIR"/project/datasets/DB5/final/raw --source_type db5 --rank "$1" --size "$2"
 python3 project/datasets/builder/collect_dataset_statistics.py "$PROJDIR"/project/datasets/DB5/final/raw --rank "$1" --size "$2"
+python3 project/datasets/builder/log_dataset_statistics.py "$PROJDIR"/project/datasets/DB5/final/raw --rank "$1" --size "$2"
 python3 project/datasets/builder/impute_missing_feature_values.py "$PROJDIR"/project/datasets/DB5/final/raw --num_cpus 32 --rank "$1" --size "$2"
 ```
 

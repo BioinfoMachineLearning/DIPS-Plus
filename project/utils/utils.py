@@ -962,17 +962,21 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
     df0_hsaacs = pd.DataFrame(np.array(df0_hsaacs))
     df0_cns = df0.iloc[:, 15]
     df0_sequence_feats = pd.DataFrame(np.array([sequence_feats for sequence_feats in df0.iloc[:, 16]]))
+    df0_amide_normal_vecs = pd.DataFrame(np.array([sequence_feats for sequence_feats in df0.iloc[:, 17]]))
 
     # Initially inspect whether there are missing features in the first structure
     df0_numeric_feat_cols_have_null = df0_numeric_feat_cols.isna().values.any()
     df0_hsaacs_have_null = df0_hsaacs.isna().values.any()
     df0_cns_have_null = df0_cns.isna().values.any()
     df0_sequence_feats_have_null = df0_sequence_feats.isna().values.any()
+    df0_amide_normal_vecs_have_null = df0_amide_normal_vecs.isna().values.any()
+
     df0_has_null = df0.isna().values.any()
     df0_nan_found = df0_numeric_feat_cols_have_null or \
                     df0_hsaacs_have_null or \
                     df0_cns_have_null or \
                     df0_sequence_feats_have_null or \
+                    df0_amide_normal_vecs_have_null or \
                     df0_has_null
     if df0_nan_found:
         logging.info(
@@ -982,6 +986,7 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
             df0_hsaacs_have_null: {df0_hsaacs_have_null}\n
             df0_cns_have_null: {df0_cns_have_null}\n
             df0_sequence_feats_have_null: {df0_sequence_feats_have_null}\n
+            df0_amide_normal_vecs_have_null: {df0_amide_normal_vecs_have_null}\n
             df0_has_null: {df0_has_null}
             """)
 
@@ -998,15 +1003,20 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
     df0_sequence_feats = df0_sequence_feats.apply(lambda x: x.fillna(determine_na_fill_value(x)), axis=0)
     df0['sequence_feats'] = df0_sequence_feats.values.tolist()
 
+    df0_amide_normal_vecs = df0_amide_normal_vecs.apply(lambda x: x.fillna(determine_na_fill_value(x)), axis=0)
+    df0['amide_normal_vecs'] = df0_amide_normal_vecs.values.tolist()
+
     df0_numeric_feat_cols_have_null = df0_numeric_feat_cols.isna().values.any()
     df0_hsaacs_have_null = df0_hsaacs.isna().values.any()
     df0_cns_have_null = df0_cns.isna().values.any()
     df0_sequence_feats_have_null = df0_sequence_feats.isna().values.any()
+    df0_amide_normal_vecs_have_null = df0_amide_normal_vecs.isna().values.any()
     df0_has_null = df0.isna().values.any()
     df0_nan_found = df0_numeric_feat_cols_have_null or \
                     df0_hsaacs_have_null or \
                     df0_cns_have_null or \
                     df0_sequence_feats_have_null or \
+                    df0_amide_normal_vecs_have_null or \
                     df0_has_null
     if df0_nan_found:
         raise Exception(
@@ -1016,6 +1026,7 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
             df0_hsaacs_have_null: {df0_hsaacs_have_null}\n
             df0_cns_have_null: {df0_cns_have_null}\n
             df0_sequence_feats_have_null: {df0_sequence_feats_have_null}\n
+            df0_amide_normal_vecs_have_null: {df0_amide_normal_vecs_have_null}\n
             df0_has_null: {df0_has_null}
             """)
 
@@ -1036,17 +1047,20 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
     df1_hsaacs = pd.DataFrame(np.array(df1_hsaacs))
     df1_cns = df1.iloc[:, 15]
     df1_sequence_feats = pd.DataFrame(np.array([sequence_feats for sequence_feats in df1.iloc[:, 16]]))
+    df1_amide_normal_vecs = pd.DataFrame(np.array([sequence_feats for sequence_feats in df1.iloc[:, 17]]))
 
     # Initially inspect whether there are missing features in the second structure
     df1_numeric_feat_cols_have_null = df1_numeric_feat_cols.isna().values.any()
     df1_hsaacs_have_null = df1_hsaacs.isna().values.any()
     df1_cns_have_null = df1_cns.isna().values.any()
     df1_sequence_feats_have_null = df1_sequence_feats.isna().values.any()
+    df1_amide_normal_vecs_have_null = df1_amide_normal_vecs.isna().values.any()
     df1_has_null = df1.isna().values.any()
     df1_nan_found = df1_numeric_feat_cols_have_null or \
                     df1_hsaacs_have_null or \
                     df1_cns_have_null or \
                     df1_sequence_feats_have_null or \
+                    df1_amide_normal_vecs_have_null or \
                     df1_has_null
     if df1_nan_found:
         logging.info(
@@ -1056,6 +1070,7 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
             df1_hsaacs_have_null: {df1_hsaacs_have_null}\n
             df1_cns_have_null: {df1_cns_have_null}\n
             df1_sequence_feats_have_null: {df1_sequence_feats_have_null}\n
+            df1_amide_normal_vecs_have_null: {df1_amide_normal_vecs_have_null}\n
             df1_has_null: {df1_has_null}
             """)
 
@@ -1072,10 +1087,14 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
     df1_sequence_feats = df1_sequence_feats.apply(lambda x: x.fillna(determine_na_fill_value(x)), axis=0)
     df1['sequence_feats'] = df1_sequence_feats.values.tolist()
 
+    df1_amide_normal_vecs = df1_amide_normal_vecs.apply(lambda x: x.fillna(determine_na_fill_value(x)), axis=0)
+    df1['amide_normal_vecs'] = df1_amide_normal_vecs.values.tolist()
+
     df1_numeric_feat_cols_have_null = df1_numeric_feat_cols.isna().values.any()
     df1_hsaacs_have_null = df1_hsaacs.isna().values.any()
     df1_cns_have_null = df1_cns.isna().values.any()
     df1_sequence_feats_have_null = df1_sequence_feats.isna().values.any()
+    df1_amide_normal_vecs_have_null = df1_amide_normal_vecs.isna().values.any()
     df1_has_null = df1.isna().values.any()
     df1_nan_found = df1_numeric_feat_cols_have_null or \
                     df1_hsaacs_have_null or \
@@ -1090,6 +1109,7 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
             df1_hsaacs_have_null: {df1_hsaacs_have_null}\n
             df1_cns_have_null: {df1_cns_have_null}\n
             df1_sequence_feats_have_null: {df1_sequence_feats_have_null}\n
+            df1_amide_normal_vecs_have_null: {df1_amide_normal_vecs_have_null}\n
             df1_has_null: {df1_has_null}
             """)
 
@@ -1303,6 +1323,38 @@ def log_dataset_statistics(logger, dataset_statistics: dict):
                 f' valid amide normal vectors found for df0 structures in total')
     logger.info(f'{dataset_statistics["num_of_valid_df1_amide_normal_vecs"]}'
                 f' valid amide normal vectors found for df1 structures in total')
+
+
+def process_raw_file_into_dgl_graphs(raw_filepath: str, new_graph_dir: str, processed_filepath: str,
+                                     edge_dist_cutoff: float, edge_limit: int, self_loops: bool):
+    """Process each postprocessed pair into a graph pair."""
+    # Retrieve specified complex
+    bound_complex = pd.read_pickle(raw_filepath)
+
+    # Convert each DataFrame into its corresponding DGLGraph representations
+    graph0 = convert_df_to_dgl_graph(bound_complex.df0, raw_filepath, edge_dist_cutoff, edge_limit, self_loops)
+    graph1 = convert_df_to_dgl_graph(bound_complex.df1, raw_filepath, edge_dist_cutoff, edge_limit, self_loops)
+
+    # Assemble and cache pair of graphs
+    batch = dgl.batch([graph0, graph1])
+    if not os.path.exists(new_graph_dir):
+        os.mkdir(new_graph_dir)
+    torch.save(batch, processed_filepath)
+    logging.info(f'Finished converting postprocessed pair into DGL graph: {processed_filepath}')
+
+
+def make_dgl_graphs(output_dir: str, input_file: str, edge_dist_cutoff: float, edge_limit: int, self_loops: bool):
+    """Convert all final (raw) complexes stored as .dill files into batched DGL graph object pairs inside .pt files."""
+    input_file_parts = input_file.split(os.sep)
+    processed_filepath = os.path.join(
+        output_dir, input_file_parts[-2], f'{os.path.splitext(input_file_parts[-1])[0]}.pt')
+    if not os.path.exists(processed_filepath):
+        process_raw_file_into_dgl_graphs(input_file,
+                                         os.path.join(*processed_filepath.split(os.sep)[:-1]),
+                                         processed_filepath,
+                                         edge_dist_cutoff,
+                                         edge_limit,
+                                         self_loops)
 
 
 def convert_df_to_dgl_graph(struct_df: pd.DataFrame, input_file: str, edge_dist_cutoff: float,

@@ -122,19 +122,18 @@ venv.tar.gz
 .vscode
 
 # DIPS
-project/datasets/DIPS/complexes/
+project/datasets/DIPS/complexes/**
 project/datasets/DIPS/interim/**
-project/datasets/DIPS/pairs/
-project/datasets/DIPS/parsed/
-project/datasets/DIPS/ptt/
+project/datasets/DIPS/pairs/**
+project/datasets/DIPS/parsed/**
+project/datasets/DIPS/ptt/**
 project/datasets/DIPS/raw/**
 project/datasets/DIPS/final/raw/**
-project/datasets/DIPS/final/raw.tar.gz
-project/datasets/DIPS/final/raw (copy)
+project/datasets/DIPS/final/raw_backup/**
 
 # DB5
-project/datasets/DB5/processed
+project/datasets/DB5/processed/**
 project/datasets/DB5/raw/**
 project/datasets/DB5/interim/**
-project/datasets/DB5/final/raw
-project/datasets/DB5/final/raw (copy)/**
+project/datasets/DB5/final/raw/**
+project/datasets/DB5/final/raw_backup/**

@@ -31,7 +31,7 @@ def main(raw_pdb_dir: str, pruned_pairs_dir: str, external_feats_dir: str, outpu
 
     # Make sure the output_dir exists
     if not os.path.exists(output_dir):
-        os.makedirs(output_dir, exist_ok=True)
+        os.mkdir(output_dir)
 
     # Get work filenames
     logger.info(f'Looking for all pairs in {pruned_pairs_dir}')
@@ -56,7 +56,7 @@ def main(raw_pdb_dir: str, pruned_pairs_dir: str, external_feats_dir: str, outpu
     for pdb_filename in work_filenames:
         sub_dir = output_dir + '/' + get_pdb_code(pdb_filename)[1:3]
         if not os.path.exists(sub_dir):
-            os.makedirs(sub_dir, exist_ok=True)
+            os.mkdir(sub_dir)
         new_output_filename = sub_dir + '/' + get_pdb_name(pdb_filename) + ".dill" if \
             source_type == 'rcsb' else \
             sub_dir + '/' + get_pdb_name(pdb_filename)

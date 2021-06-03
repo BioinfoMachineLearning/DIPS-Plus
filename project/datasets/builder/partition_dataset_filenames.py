@@ -32,7 +32,7 @@ def main(output_dir: str, source_type: str, filter_by_seq_length: bool, max_seq_
 
         # Make sure the output_dir exists
         if not os.path.exists(output_dir):
-            os.makedirs(output_dir, exist_ok=True)
+            os.mkdir(output_dir)
 
         pairs_postprocessed_txt = os.path.join(output_dir, 'pairs-postprocessed.txt')
         if not os.path.exists(pairs_postprocessed_txt):  # Create comprehensive data list if not already existent

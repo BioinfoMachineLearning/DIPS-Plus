@@ -36,7 +36,7 @@ from project.utils.constants import AMINO_ACIDS, AMINO_ACID_IDX, MAX_NODES_PER_J
     PSAIA_COLUMNS, PDB_PARSER, DEFAULT_DATASET_STATISTICS, ATOM_COUNT_LIMIT, RCSB_BASE_URL, FEAT_COLS, \
     ALLOWABLE_FEATS, DEFAULT_MISSING_SS, DEFAULT_MISSING_PROTRUSION_INDEX, DEFAULT_MISSING_RSA, \
     DEFAULT_MISSING_RD, DEFAULT_MISSING_HSAAC, DEFAULT_MISSING_CN, DEFAULT_MISSING_SEQUENCE_FEATS, \
-    DEFAULT_MISSING_NORM_VEC, HSAAC_DIM
+    DEFAULT_MISSING_NORM_VEC, HSAAC_DIM, NUM_ALLOWABLE_NANS
 
 try:
     from types import SliceType
@@ -883,14 +883,14 @@ def collect_dataset_statistics(output_dir: str):
                                                  & (~df0['max_cx'].isna()) & (~df0['min_cx'].isna())])
         dataset_statistics['num_of_valid_df0_protrusion_indices'] += num_nonzero_protrusion_indices
         for hsaac_array in df0['hsaac']:
-            if (np.count_nonzero(hsaac_array) - np.sum(np.isnan(hsaac_array))) > 0:  # np.count_nonzero includes NaNs
+            if np.sum(np.isnan(hsaac_array)) == 0:
                 dataset_statistics['num_of_valid_df0_hsaacs'] += 1
         dataset_statistics['num_of_valid_df0_cn_values'] += len(df0[~df0['cn_value'].isna()])
         for sequence_array in df0['sequence_feats']:
-            if (np.count_nonzero(sequence_array) - np.sum(np.isnan(sequence_array.astype(np.float)))) > 0:
+            if np.sum(np.isnan(sequence_array.astype(np.float))) == 0:
                 dataset_statistics['num_of_valid_df0_sequence_feats'] += 1
         for amide_normal_vec in df0['amide_norm_vec']:
-            if (np.count_nonzero(amide_normal_vec) - np.sum(np.isnan(amide_normal_vec.astype(np.float)))) > 0:
+            if np.sum(np.isnan(amide_normal_vec.astype(np.float))) == 0:
                 dataset_statistics['num_of_valid_df0_amide_normal_vecs'] += 1
 
         # Increment total residue count for first structure
@@ -913,14 +913,14 @@ def collect_dataset_statistics(output_dir: str):
                                                  & (~df1['max_cx'].isna()) & (~df1['min_cx'].isna())])
         dataset_statistics['num_of_valid_df1_protrusion_indices'] += num_nonzero_protrusion_indices
         for hsaac_array in df1['hsaac']:
-            if (np.count_nonzero(hsaac_array) - np.sum(np.isnan(hsaac_array))) > 0:  # np.count_nonzero includes NaNs
+            if np.sum(np.isnan(hsaac_array)) == 0:
                 dataset_statistics['num_of_valid_df1_hsaacs'] += 1
         dataset_statistics['num_of_valid_df1_cn_values'] += len(df1[~df1['cn_value'].isna()])
         for sequence_array in df1['sequence_feats']:
-            if (np.count_nonzero(sequence_array) - np.sum(np.isnan(sequence_array.astype(np.float)))) > 0:
+            if np.sum(np.isnan(sequence_array.astype(np.float))) == 0:
                 dataset_statistics['num_of_valid_df1_sequence_feats'] += 1
         for amide_normal_vec in df1['amide_norm_vec']:
-            if (np.count_nonzero(amide_normal_vec) - np.sum(np.isnan(amide_normal_vec.astype(np.float)))) > 0:
+            if np.sum(np.isnan(amide_normal_vec.astype(np.float))) == 0:
                 dataset_statistics['num_of_valid_df1_amide_normal_vecs'] += 1
 
         # Increment total residue count for second structure
@@ -935,12 +935,24 @@ def collect_dataset_statistics(output_dir: str):
     return dataset_statistics
 
 
-def determine_na_fill_value(column):
-    """Determine whether to fill NaNs in a given column with zero or with the column's calculated median."""
-    return 0 if column.isna().sum().sum() > 10 else column.median()
+def determine_nan_fill_value(column: pd.Series, imputation_method='median'):
+    """Determine whether to fill NaNs in a given column with the column's requested fill value or instead with zero."""
+    cleaned_imputation_method = imputation_method.strip().lower()
+    # Determine user-requested imputation (fill) value
+    if cleaned_imputation_method == 'mean':
+        imputation_value = column.mean()
+    elif cleaned_imputation_method == 'min':
+        imputation_value = column.min()
+    elif cleaned_imputation_method == 'max':
+        imputation_value = column.max()
+    elif cleaned_imputation_method == 'zero':
+        imputation_value = 0
+    else:  # Default to replacing NaNs with the column's median value
+        imputation_value = column.median()
+    return imputation_value if column.isna().sum().sum() <= NUM_ALLOWABLE_NANS else 0
 
 
-def impute_missing_feature_values(input_pair_filename: str, output_pair_filename: str):
+def impute_missing_feature_values(input_pair_filename: str, output_pair_filename: str, impute_atom_features: bool):
     """Impute missing feature values in a postprocessed dataset."""
     # Look at a .dill file in the given output directory
     postprocessed_pair: pa.Pair = pd.read_pickle(input_pair_filename)
@@ -949,8 +961,9 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
     # DataFrame 0
     # -------------
 
-    # Grab first structure's DataFrame and its columns of interest
-    df0: pd.DataFrame = postprocessed_pair.df0[postprocessed_pair.df0['atom_name'].apply(lambda x: x == 'CA')]
+    # Grab first structure's DataFrame and its feature columns, filtering out non-CA atoms (if requested)
+    df0: pd.DataFrame = postprocessed_pair.df0 if impute_atom_features \
+        else postprocessed_pair.df0[postprocessed_pair.df0['atom_name'].apply(lambda x: x == 'CA')]
     df0_numeric_feat_cols = df0.iloc[:, 6:14]
     df0_hsaacs = []
     for hsaac in df0.iloc[:, 14]:
@@ -965,77 +978,75 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
     df0_amide_normal_vecs = pd.DataFrame(np.array([sequence_feats for sequence_feats in df0.iloc[:, 17]]))
 
     # Initially inspect whether there are missing features in the first structure
-    df0_numeric_feat_cols_have_null = df0_numeric_feat_cols.isna().values.any()
-    df0_hsaacs_have_null = df0_hsaacs.isna().values.any()
-    df0_cns_have_null = df0_cns.isna().values.any()
-    df0_sequence_feats_have_null = df0_sequence_feats.isna().values.any()
-    df0_amide_normal_vecs_have_null = df0_amide_normal_vecs.isna().values.any()
+    df0_numeric_feat_cols_have_nan = df0_numeric_feat_cols.isna().values.any()
+    df0_hsaacs_have_nan = df0_hsaacs.isna().values.any()
+    df0_cns_have_nan = df0_cns.isna().values.any()
+    df0_sequence_feats_have_nan = df0_sequence_feats.isna().values.any()
+    df0_amide_normal_vecs_have_nan = df0_amide_normal_vecs.isna().values.any()
 
-    df0_has_null = df0.isna().values.any()
-    df0_nan_found = df0_numeric_feat_cols_have_null or \
-                    df0_hsaacs_have_null or \
-                    df0_cns_have_null or \
-                    df0_sequence_feats_have_null or \
-                    df0_amide_normal_vecs_have_null or \
-                    df0_has_null
+    df0_has_nan = df0.isna().values.any()
+    df0_nan_found = df0_numeric_feat_cols_have_nan or \
+                    df0_hsaacs_have_nan or \
+                    df0_cns_have_nan or \
+                    df0_sequence_feats_have_nan or \
+                    df0_amide_normal_vecs_have_nan or \
+                    df0_has_nan
     if df0_nan_found:
-        logging.info(
-            f"""Before Feature Imputation:\n
-            df0 contained at least one NaN value:\n
-            df0_numeric_feat_cols_have_null: {df0_numeric_feat_cols_have_null}\n
-            df0_hsaacs_have_null: {df0_hsaacs_have_null}\n
-            df0_cns_have_null: {df0_cns_have_null}\n
-            df0_sequence_feats_have_null: {df0_sequence_feats_have_null}\n
-            df0_amide_normal_vecs_have_null: {df0_amide_normal_vecs_have_null}\n
-            df0_has_null: {df0_has_null}
-            """)
+        logging.info(f"""Before Feature Imputation:
+                        | df0 contained at least one NaN value |
+                        df0_numeric_feat_cols_have_nan: {df0_numeric_feat_cols_have_nan}
+                        df0_hsaacs_have_nan: {df0_hsaacs_have_nan}
+                        df0_cns_have_nan: {df0_cns_have_nan}
+                        df0_sequence_feats_have_nan: {df0_sequence_feats_have_nan}
+                        df0_amide_normal_vecs_have_nan: {df0_amide_normal_vecs_have_nan}
+                        df0_has_nan: {df0_has_nan}""")
 
     # Impute first structure's missing feature values uniquely for each column
-    df0_numeric_feat_cols = df0_numeric_feat_cols.apply(lambda x: x.fillna(determine_na_fill_value(x)), axis=0)
+    df0_numeric_feat_cols = df0_numeric_feat_cols.apply(lambda col: col.fillna(determine_nan_fill_value(col)), axis=0)
     df0.iloc[:, 6:14] = df0_numeric_feat_cols
 
-    df0_hsaacs = df0_hsaacs.apply(lambda x: x.fillna(determine_na_fill_value(x)), axis=0)
+    df0_hsaacs = df0_hsaacs.apply(lambda col: col.fillna(determine_nan_fill_value(col)), axis=0)
     df0['hsaac'] = df0_hsaacs.values.tolist()
 
-    df0_cns = df0_cns.fillna(determine_na_fill_value(df0_cns))
+    df0_cns = df0_cns.fillna(determine_nan_fill_value(df0_cns))
     df0.iloc[:, 15] = df0_cns
 
-    df0_sequence_feats = df0_sequence_feats.apply(lambda x: x.fillna(determine_na_fill_value(x)), axis=0)
-    df0['sequence_feats'] = df0_sequence_feats.values.tolist()
+    df0_sequence_feats = df0_sequence_feats.apply(lambda col: col.fillna(determine_nan_fill_value(col)), axis=0)
+    df0['sequence_feats'] = [np.array(lst) for lst in df0_sequence_feats.values.tolist()]
 
-    df0_amide_normal_vecs = df0_amide_normal_vecs.apply(lambda x: x.fillna(determine_na_fill_value(x)), axis=0)
-    df0['amide_normal_vecs'] = df0_amide_normal_vecs.values.tolist()
+    df0_amide_normal_vecs = df0_amide_normal_vecs.apply(lambda col: col.fillna(
+        determine_nan_fill_value(col, imputation_method='zero')), axis=0)
+    df0['amide_norm_vec'] = [np.array(lst) for lst in df0_amide_normal_vecs.values.tolist()]
 
-    df0_numeric_feat_cols_have_null = df0_numeric_feat_cols.isna().values.any()
-    df0_hsaacs_have_null = df0_hsaacs.isna().values.any()
-    df0_cns_have_null = df0_cns.isna().values.any()
-    df0_sequence_feats_have_null = df0_sequence_feats.isna().values.any()
-    df0_amide_normal_vecs_have_null = df0_amide_normal_vecs.isna().values.any()
-    df0_has_null = df0.isna().values.any()
-    df0_nan_found = df0_numeric_feat_cols_have_null or \
-                    df0_hsaacs_have_null or \
-                    df0_cns_have_null or \
-                    df0_sequence_feats_have_null or \
-                    df0_amide_normal_vecs_have_null or \
-                    df0_has_null
+    df0_numeric_feat_cols_have_nan = df0_numeric_feat_cols.isna().values.any()
+    df0_hsaacs_have_nan = df0_hsaacs.isna().values.any()
+    df0_cns_have_nan = df0_cns.isna().values.any()
+    df0_sequence_feats_have_nan = df0_sequence_feats.isna().values.any()
+    df0_amide_normal_vecs_have_nan = df0_amide_normal_vecs.isna().values.any()
+    df0_has_nan = df0.isna().values.any()
+    df0_nan_found = df0_numeric_feat_cols_have_nan or \
+                    df0_hsaacs_have_nan or \
+                    df0_cns_have_nan or \
+                    df0_sequence_feats_have_nan or \
+                    df0_amide_normal_vecs_have_nan or \
+                    df0_has_nan
     if df0_nan_found:
-        raise Exception(
-            f"""After Feature Imputation:\n
-            df0 contained at least one NaN value:\n
-            df0_numeric_feat_cols_have_null: {df0_numeric_feat_cols_have_null}\n
-            df0_hsaacs_have_null: {df0_hsaacs_have_null}\n
-            df0_cns_have_null: {df0_cns_have_null}\n
-            df0_sequence_feats_have_null: {df0_sequence_feats_have_null}\n
-            df0_amide_normal_vecs_have_null: {df0_amide_normal_vecs_have_null}\n
-            df0_has_null: {df0_has_null}
-            """)
+        raise Exception(f"""After Feature Imputation:
+                        | df0 contained at least one NaN value |
+                        df0_numeric_feat_cols_have_nan: {df0_numeric_feat_cols_have_nan}
+                        df0_hsaacs_have_nan: {df0_hsaacs_have_nan}
+                        df0_cns_have_nan: {df0_cns_have_nan}
+                        df0_sequence_feats_have_nan: {df0_sequence_feats_have_nan}
+                        df0_amide_normal_vecs_have_nan: {df0_amide_normal_vecs_have_nan}
+                        df0_has_nan: {df0_has_nan}""")
 
     # -------------
     # DataFrame 1
     # -------------
 
-    # Grab second structure's DataFrame and its columns of interest
-    df1: pd.DataFrame = postprocessed_pair.df1[postprocessed_pair.df1['atom_name'].apply(lambda x: x == 'CA')]
+    # Grab second structure's DataFrame and its feature columns, filtering out non-CA atoms (if requested)
+    df1: pd.DataFrame = postprocessed_pair.df1 if impute_atom_features \
+        else postprocessed_pair.df1[postprocessed_pair.df1['atom_name'].apply(lambda x: x == 'CA')]
     df1_numeric_feat_cols = df1.iloc[:, 6:14]
     df1_hsaacs = []
     for hsaac in df1.iloc[:, 14]:
@@ -1050,68 +1061,65 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
     df1_amide_normal_vecs = pd.DataFrame(np.array([sequence_feats for sequence_feats in df1.iloc[:, 17]]))
 
     # Initially inspect whether there are missing features in the second structure
-    df1_numeric_feat_cols_have_null = df1_numeric_feat_cols.isna().values.any()
-    df1_hsaacs_have_null = df1_hsaacs.isna().values.any()
-    df1_cns_have_null = df1_cns.isna().values.any()
-    df1_sequence_feats_have_null = df1_sequence_feats.isna().values.any()
-    df1_amide_normal_vecs_have_null = df1_amide_normal_vecs.isna().values.any()
-    df1_has_null = df1.isna().values.any()
-    df1_nan_found = df1_numeric_feat_cols_have_null or \
-                    df1_hsaacs_have_null or \
-                    df1_cns_have_null or \
-                    df1_sequence_feats_have_null or \
-                    df1_amide_normal_vecs_have_null or \
-                    df1_has_null
+    df1_numeric_feat_cols_have_nan = df1_numeric_feat_cols.isna().values.any()
+    df1_hsaacs_have_nan = df1_hsaacs.isna().values.any()
+    df1_cns_have_nan = df1_cns.isna().values.any()
+    df1_sequence_feats_have_nan = df1_sequence_feats.isna().values.any()
+    df1_amide_normal_vecs_have_nan = df1_amide_normal_vecs.isna().values.any()
+    df1_has_nan = df1.isna().values.any()
+    df1_nan_found = df1_numeric_feat_cols_have_nan or \
+                    df1_hsaacs_have_nan or \
+                    df1_cns_have_nan or \
+                    df1_sequence_feats_have_nan or \
+                    df1_amide_normal_vecs_have_nan or \
+                    df1_has_nan
     if df1_nan_found:
-        logging.info(
-            f"""Before Feature Imputation:\n
-            df1 contained at least one NaN value:\n
-            df1_numeric_feat_cols_have_null: {df1_numeric_feat_cols_have_null}\n
-            df1_hsaacs_have_null: {df1_hsaacs_have_null}\n
-            df1_cns_have_null: {df1_cns_have_null}\n
-            df1_sequence_feats_have_null: {df1_sequence_feats_have_null}\n
-            df1_amide_normal_vecs_have_null: {df1_amide_normal_vecs_have_null}\n
-            df1_has_null: {df1_has_null}
-            """)
+        logging.info(f"""Before Feature Imputation:
+                    | df1 contained at least one NaN value |
+                    df1_numeric_feat_cols_have_nan: {df1_numeric_feat_cols_have_nan}
+                    df1_hsaacs_have_nan: {df1_hsaacs_have_nan}
+                    df1_cns_have_nan: {df1_cns_have_nan}
+                    df1_sequence_feats_have_nan: {df1_sequence_feats_have_nan}
+                    df1_amide_normal_vecs_have_nan: {df1_amide_normal_vecs_have_nan}
+                    df1_has_nan: {df1_has_nan}""")
 
     # Impute second structure's missing feature values uniquely for each column
-    df1_numeric_feat_cols = df1_numeric_feat_cols.apply(lambda x: x.fillna(determine_na_fill_value(x)), axis=0)
+    df1_numeric_feat_cols = df1_numeric_feat_cols.apply(lambda col: col.fillna(determine_nan_fill_value(col)), axis=0)
     df1.iloc[:, 6:14] = df1_numeric_feat_cols
 
-    df1_hsaacs = df1_hsaacs.apply(lambda x: x.fillna(determine_na_fill_value(x)), axis=0)
+    df1_hsaacs = df1_hsaacs.apply(lambda col: col.fillna(determine_nan_fill_value(col)), axis=0)
     df1['hsaac'] = df1_hsaacs.values.tolist()
 
-    df1_cns = df1_cns.fillna(determine_na_fill_value(df1_cns))
+    df1_cns = df1_cns.fillna(determine_nan_fill_value(df1_cns))
     df1.iloc[:, 15] = df1_cns
 
-    df1_sequence_feats = df1_sequence_feats.apply(lambda x: x.fillna(determine_na_fill_value(x)), axis=0)
-    df1['sequence_feats'] = df1_sequence_feats.values.tolist()
+    df1_sequence_feats = df1_sequence_feats.apply(lambda col: col.fillna(determine_nan_fill_value(col)), axis=0)
+    df1['sequence_feats'] = [np.array(lst) for lst in df1_sequence_feats.values.tolist()]
 
-    df1_amide_normal_vecs = df1_amide_normal_vecs.apply(lambda x: x.fillna(determine_na_fill_value(x)), axis=0)
-    df1['amide_normal_vecs'] = df1_amide_normal_vecs.values.tolist()
+    df1_amide_normal_vecs = df1_amide_normal_vecs.apply(lambda col: col.fillna(
+        determine_nan_fill_value(col, imputation_method='zero')), axis=0)
+    df1['amide_norm_vec'] = [np.array(lst) for lst in df1_amide_normal_vecs.values.tolist()]
 
-    df1_numeric_feat_cols_have_null = df1_numeric_feat_cols.isna().values.any()
-    df1_hsaacs_have_null = df1_hsaacs.isna().values.any()
-    df1_cns_have_null = df1_cns.isna().values.any()
-    df1_sequence_feats_have_null = df1_sequence_feats.isna().values.any()
-    df1_amide_normal_vecs_have_null = df1_amide_normal_vecs.isna().values.any()
-    df1_has_null = df1.isna().values.any()
-    df1_nan_found = df1_numeric_feat_cols_have_null or \
-                    df1_hsaacs_have_null or \
-                    df1_cns_have_null or \
-                    df1_sequence_feats_have_null or \
-                    df1_has_null
+    df1_numeric_feat_cols_have_nan = df1_numeric_feat_cols.isna().values.any()
+    df1_hsaacs_have_nan = df1_hsaacs.isna().values.any()
+    df1_cns_have_nan = df1_cns.isna().values.any()
+    df1_sequence_feats_have_nan = df1_sequence_feats.isna().values.any()
+    df1_amide_normal_vecs_have_nan = df1_amide_normal_vecs.isna().values.any()
+    df1_has_nan = df1.isna().values.any()
+    df1_nan_found = df1_numeric_feat_cols_have_nan or \
+                    df1_hsaacs_have_nan or \
+                    df1_cns_have_nan or \
+                    df1_sequence_feats_have_nan or \
+                    df1_has_nan
     if df1_nan_found:
-        raise Exception(
-            f"""After Feature Imputation:\n
-            df1 contained at least one NaN value:\n
-            df1_numeric_feat_cols_have_null: {df1_numeric_feat_cols_have_null}\n
-            df1_hsaacs_have_null: {df1_hsaacs_have_null}\n
-            df1_cns_have_null: {df1_cns_have_null}\n
-            df1_sequence_feats_have_null: {df1_sequence_feats_have_null}\n
-            df1_amide_normal_vecs_have_null: {df1_amide_normal_vecs_have_null}\n
-            df1_has_null: {df1_has_null}
-            """)
+        raise Exception(f"""After Feature Imputation:
+                        | df1 contained at least one NaN value |
+                        df1_numeric_feat_cols_have_nan: {df1_numeric_feat_cols_have_nan}
+                        df1_hsaacs_have_nan: {df1_hsaacs_have_nan}
+                        df1_cns_have_nan: {df1_cns_have_nan}
+                        df1_sequence_feats_have_nan: {df1_sequence_feats_have_nan}
+                        df1_amide_normal_vecs_have_nan: {df1_amide_normal_vecs_have_nan}
+                        df1_has_nan: {df1_has_nan}""")
 
     # Reconstruct a feature-imputed Pair representing a complex of interacting proteins
     feature_imputed_pair = pa.Pair(complex=postprocessed_pair.complex, df0=df0, df1=df1,
@@ -1230,7 +1238,7 @@ def find_pruned_pairs_with_missing_pdb_files(logger, raw_pdb_dir: str, pair_file
             missing_pdb_filenames.append(raw_pdb_filename)
         if not os.path.exists(current_pdb_dir):
             logger.info(f'Making new dir {current_pdb_dir}')
-            os.makedirs(current_pdb_dir, exist_ok=True)
+            os.mkdir(current_pdb_dir)
     return missing_pdb_filenames
 
 
@@ -1335,19 +1343,30 @@ def process_raw_file_into_dgl_graphs(raw_filepath: str, new_graph_dir: str, proc
     graph0 = convert_df_to_dgl_graph(bound_complex.df0, raw_filepath, edge_dist_cutoff, edge_limit, self_loops)
     graph1 = convert_df_to_dgl_graph(bound_complex.df1, raw_filepath, edge_dist_cutoff, edge_limit, self_loops)
 
-    # Assemble and cache pair of graphs
-    batch = dgl.batch([graph0, graph1])
+    # Derive inter-protein node-node (i.e. residue-residue) interaction matrix (Interacting = 1 and Non-Interacting = 0)
+    labels = np.zeros((len(bound_complex.df0), len(bound_complex.df1)))
+    for idx in bound_complex.pos_idx:
+        row1_row_num = bound_complex.df0.loc[[idx[0]]].index[0]
+        row2_row_num = bound_complex.df1.loc[[idx[1]]].index[0]
+        idx1 = bound_complex.df0.index.get_loc(row1_row_num)
+        idx2 = bound_complex.df1.index.get_loc(row2_row_num)
+        labels[idx1][idx2] = 1
+
+    # Assemble and cache pair of graphs with its corresponding labels matrix
+    graph_pair_payload = [graph0, graph1, labels]
     if not os.path.exists(new_graph_dir):
         os.mkdir(new_graph_dir)
-    torch.save(batch, processed_filepath)
-    logging.info(f'Finished converting postprocessed pair into DGL graph: {processed_filepath}')
+    torch.save(graph_pair_payload, processed_filepath)
 
 
-def make_dgl_graphs(output_dir: str, input_file: str, edge_dist_cutoff: float, edge_limit: int, self_loops: bool):
-    """Convert all final (raw) complexes stored as .dill files into batched DGL graph object pairs inside .pt files."""
+def make_dgl_graphs(output_dir: str, input_file: str, ext: str,
+                    edge_dist_cutoff: float, edge_limit: int, self_loops: bool):
+    """Convert all final 'raw' complexes into DGL graph pairs with their corresponding labels (interaction) matrix."""
+    # Construct output file path for a DGL graph pair
     input_file_parts = input_file.split(os.sep)
-    processed_filepath = os.path.join(
-        output_dir, input_file_parts[-2], f'{os.path.splitext(input_file_parts[-1])[0]}.pt')
+    processed_filepath = os.path.join(output_dir, input_file_parts[-2],
+                                      f'{os.path.splitext(input_file_parts[-1])[0]}' + f'.{ext}')
+    # Create new DGL graph pair file
     if not os.path.exists(processed_filepath):
         process_raw_file_into_dgl_graphs(input_file,
                                          os.path.join(*processed_filepath.split(os.sep)[:-1]),
@@ -1386,12 +1405,9 @@ def convert_df_to_dgl_graph(struct_df: pd.DataFrame, input_file: str, edge_dist_
     graph.ndata['x'] = node_coords  # [num_residues_in_struct_df, 3]
 
     """Encode edge features and labels in graph"""
-    # Relative Euclidean coordinates for residue pairs
-    graph.edata['c'] = node_coords[dsts] - node_coords[srcs]  # [num_edges, 3]
-    # Relative (squared) Euclidean distance for residue pairs
-    graph.edata['d'] = (graph.edata['c'] ** 2).sum(dim=-1, keepdim=True)  # [num_edges, 1]
     # Float edge weight scaled by Euclidean distance between source and destination node
-    graph.edata['w'] = min_max_normalize_feature_tensor(graph.edata['d'])  # [num_edges, 1]
+    graph.edata['w'] = min_max_normalize_feature_tensor(
+        ((node_coords[dsts] - node_coords[srcs]) ** 2).sum(dim=-1, keepdim=True))  # [num_edges, 1]
     # Angle between the two amide normal vectors for a pair of residues, for all edge-connected residue pairs
     plane1 = struct_df[['amide_norm_vec']].iloc[dsts]
     plane2 = struct_df[['amide_norm_vec']].iloc[srcs]

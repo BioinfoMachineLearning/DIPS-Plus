@@ -21,7 +21,7 @@ def main(output_dir: str, rank: int, size: int):
 
         # Make sure the output_dir exists
         if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+            os.mkdir(output_dir)
 
         # Create dataset statistics CSV if not already existent
         dataset_statistics_csv = os.path.join(output_dir, 'dataset_statistics.csv')

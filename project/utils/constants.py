@@ -68,9 +68,12 @@ DEFAULT_MISSING_CN = DEFAULT_MISSING_FEAT_VALUE
 DEFAULT_MISSING_SEQUENCE_FEATS = np.array([DEFAULT_MISSING_FEAT_VALUE for _ in range(27)])
 DEFAULT_MISSING_NORM_VEC = [DEFAULT_MISSING_FEAT_VALUE for _ in range(3)]
 
+# Default number of NaN values allowed in a specific column before imputing missing features of the column with zero
+NUM_ALLOWABLE_NANS = 10
+
 # Features to be one-hot encoded during graph processing and what their values could be
 FEAT_COLS = [
-    'resname',
+    # 'resname',  # By default, leave out one-hot encoding of residues' type to decrease feature redundancy
     'ss_value',
     'rsa_value',
     'rd_value'
@@ -80,11 +83,14 @@ FEAT_COLS.extend(
     ['hsaac',
      'cn_value',
      'sequence_feats',
-     'amide_norm_vec'])
+     'amide_norm_vec',
+     # 'element'  # For atom-level learning only
+     ])
 
 ALLOWABLE_FEATS = [
-    ["TRP", "PHE", "LYS", "PRO", "ASP", "ALA", "ARG", "CYS", "VAL", "THR",
-     "GLY", "SER", "HIS", "LEU", "GLU", "TYR", "ILE", "ASN", "MET", "GLN"],
+    # By default, leave out one-hot encoding of residues' type to decrease feature redundancy
+    # ["TRP", "PHE", "LYS", "PRO", "ASP", "ALA", "ARG", "CYS", "VAL", "THR",
+    #  "GLY", "SER", "HIS", "LEU", "GLU", "TYR", "ILE", "ASN", "MET", "GLN"],
     ['H', 'B', 'E', 'G', 'I', 'T', 'S', '-'],  # Populated 1D list means restrict column feature values by list values
     [],  # Empty list means take scalar value as is
     [],
@@ -97,5 +103,6 @@ ALLOWABLE_FEATS = [
     [[]],  # Doubly-nested, empty list means take first-level nested list as is
     [],
     [[]],
-    [[]]
+    [[]],
+    # ['C', 'O', 'N', 'S']  # For atom-level learning only
 ]

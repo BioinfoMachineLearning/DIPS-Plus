@@ -26,7 +26,7 @@ def main(output_dir: str, pruned_pairs_dir: str, num_cpus: int, rank: int, size:
 
     # Make sure the output_dir exists
     if not os.path.exists(output_dir):
-        os.makedirs(output_dir, exist_ok=True)
+        os.mkdir(output_dir)
 
     # Get work filenames
     logger.info(f'Looking for all pairs in {pruned_pairs_dir}')

@@ -494,7 +494,7 @@ def get_hsaac_for_pdb_residues(residues, similarity_matrix, raw_pdb_filename):
 
 def get_dssp_value_for_residue(dssp_dict: dict, feature: str, chain: str, residue: int):
     """Return a secondary structure (SS) value or a relative solvent accessibility (RSA) value for a given chain-residue pair."""
-    dssp_value = DEFAULT_MISSING_SS if feature == 'SS' else DEFAULT_MISSING_RSA  # Initialize to default DSSP feature value
+    dssp_value = DEFAULT_MISSING_SS if feature == 'SS' else DEFAULT_MISSING_RSA  # Initialize to default DSSP feature
     try:
         if feature == 'SS':
             dssp_values = dssp_dict[chain, (' ', residue, ' ')]

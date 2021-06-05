@@ -9,18 +9,18 @@ from atom3 import database as db
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
-from project.utils.constants import DB5_TEST_PDB_CODES, DEFAULT_MAX_SEQ_LENGTH
+from project.utils.constants import DB5_TEST_PDB_CODES, ATOM_COUNT_LIMIT
 from project.utils.utils import get_global_node_rank
 
 
 @click.command()
 @click.argument('output_dir', default='../DIPS/final/raw', type=click.Path())
 @click.option('--source_type', default='rcsb', type=click.Choice(['rcsb', 'db5']))
-@click.option('--filter_by_seq_length', '-f', default=True)
-@click.option('--max_seq_length', '-l', default=DEFAULT_MAX_SEQ_LENGTH)
+@click.option('--filter_by_atom_count', '-f', default=False)
+@click.option('--max_atom_count', '-l', default=ATOM_COUNT_LIMIT)
 @click.option('--rank', '-r', default=0)
 @click.option('--size', '-s', default=1)
-def main(output_dir: str, source_type: str, filter_by_seq_length: bool, max_seq_length: int, rank: int, size: int):
+def main(output_dir: str, source_type: str, filter_by_atom_count: bool, max_atom_count: int, rank: int, size: int):
     """Partition dataset filenames."""
     # Reestablish global rank
     rank = get_global_node_rank(rank, size)
@@ -35,16 +35,15 @@ def main(output_dir: str, source_type: str, filter_by_seq_length: bool, max_seq_
             os.mkdir(output_dir)
 
         pairs_postprocessed_txt = os.path.join(output_dir, 'pairs-postprocessed.txt')
-        if not os.path.exists(pairs_postprocessed_txt):  # Create comprehensive data list if not already existent
-            open(pairs_postprocessed_txt, 'w').close()
+        open(pairs_postprocessed_txt, 'w').close()  # Create pairs-postprocessed.txt from scratch each run
 
         # Record dataset filenames conditionally by sequence length (if requested - otherwise, record all)
         pair_filenames = [pair_filename for pair_filename in Path(output_dir).rglob('*.dill')]
         for pair_filename in tqdm(pair_filenames):
             struct_id = pair_filename.as_posix().split(os.sep)[-2]
-            if filter_by_seq_length and source_type.lower() == 'rcsb':
+            if filter_by_atom_count and source_type.lower() == 'rcsb':
                 postprocessed_pair: pa.Pair = pd.read_pickle(pair_filename)
-                if len(postprocessed_pair.df0) < max_seq_length and len(postprocessed_pair.df1) < max_seq_length:
+                if len(postprocessed_pair.df0) < max_atom_count and len(postprocessed_pair.df1) < max_atom_count:
                     with open(pairs_postprocessed_txt, 'a') as f:
                         path, filename = os.path.split(pair_filename.as_posix())
                         filename = os.path.join(struct_id, filename)

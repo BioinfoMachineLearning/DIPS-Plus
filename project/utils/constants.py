@@ -7,7 +7,6 @@ MAX_NODES_PER_JOB = 4
 
 # Dataset-global node count limits to restrict computational learning complexity
 ATOM_COUNT_LIMIT = 17500  # Default filter for both datasets when encoding complexes at an atom-based level
-DEFAULT_MAX_SEQ_LENGTH = 3000  # Default filter for sequence length of complexes when creating filename partitions
 
 # From where we can get bound PDB complexes
 RCSB_BASE_URL = 'ftp://ftp.wwpdb.org/pub/pdb/data/biounit/coordinates/divided/'

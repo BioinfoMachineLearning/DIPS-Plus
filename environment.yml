@@ -17,9 +17,9 @@ dependencies:
   #  - biopython=1.78  # For PDB parsing
   #  - hhsuite=3.3.0  # For generating sequence profile HMMs
   #  - msms=2.6.1  # For computing residue depths
-  #  - dssp=3.0.0  # For computing secondary structures - must be compiled from source for PowerPC architectures (e.g. Summit)
-  #  - pytorch  # Install with 'conda install pytorch -c pytorch -c conda-forge' - already installed on Summit as 1.7.1
-  #  - dgl-cudaXX.X  # Replace XX.X with the version of cudatoolkit installed by 'conda install pytorch -c pytorch -c conda-forge' directly above - must be manually compiled and installed on Summit
+  #  - dssp=3.0.0  # For computing secondary structures
+  #  - pytorch  # Install with 'conda install pytorch -c pytorch -c conda-forge'
+  #  - dgl-cudaXX.X  # Replace XX.X with the version of cudatoolkit installed by 'conda install pytorch -c pytorch -c conda-forge' directly above
   - pip:
       - -e .
       - -r file:requirements.txt

@@ -126,14 +126,13 @@ project/datasets/DIPS/complexes/**
 project/datasets/DIPS/interim/**
 project/datasets/DIPS/pairs/**
 project/datasets/DIPS/parsed/**
-project/datasets/DIPS/ptt/**
 project/datasets/DIPS/raw/**
 project/datasets/DIPS/final/raw/**
-project/datasets/DIPS/final/raw_backup/**
+project/datasets/DIPS/final/final_raw_dips.tar.gz*
 
 # DB5
 project/datasets/DB5/processed/**
 project/datasets/DB5/raw/**
 project/datasets/DB5/interim/**
 project/datasets/DB5/final/raw/**
-project/datasets/DB5/final/raw_backup/**
+project/datasets/DB5/final/final_raw_db5.tar.gz*

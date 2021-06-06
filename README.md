@@ -57,9 +57,69 @@ pip3 install -r requirements.txt
 pip3 install -r tests/requirements.txt
  ```
 
+## Default DIPS-Plus directory structure
+```
+DIPS-Plus
+└───project
+│    │
+│    └───datasets
+│    │   │
+│    │   └───builder
+│    │   │
+│    │   └───DB5
+│    │   │   │
+│    │   │   └───final
+│    │   │   │   │
+│    │   │   │   └───raw
+│    │   │   │
+│    │   │   └───interim
+│    │   │   │   │
+│    │   │   │   └───complexes
+│    │   │   │   │
+│    │   │   │   └───external_feats
+│    │   │   │   │
+│    │   │   │   └───pairs
+│    │   │   │
+│    │   │   └───raw
+│    │   │   README
+│    │   │
+│    │   └───DIPS
+│    │       │
+│    │       └───filters
+│    │       │
+│    │       └───final
+│    │       │   │
+│    │       │   └───raw
+│    │       │
+│    │       └───interim
+│    │       │   │
+│    │       │   └───complexes
+│    │       │   │
+│    │       │   └───external_feats
+│    │       │   │
+│    │       │   └───pairs-pruned
+│    │       │
+│    │       └───raw
+│    │           │
+│    │           └───pdb
+│    │
+│    └───utils
+│    │   constants.py
+│    │   utils.py
+│
+│   .gitignore
+│   environment.yml
+│   LICENSE
+│   README.md
+│   requirements.txt
+│   setup.cfg
+│   setup.py
+```
+
+
 ## How to compile DIPS-Plus from scratch
 
-Retrieve protein complexes from the RCSB PDB:
+Retrieve protein complexes from the RCSB PDB and build out directory structure:
 
 ```bash
 # Remove all existing training/testing sample lists
@@ -137,6 +197,17 @@ python3 project/datasets/builder/impute_missing_feature_values.py "$PROJDIR"/pro
 
 # Optionally convert each postprocessed (final 'raw') complex into a pair of DGL graphs (final 'processed') with labels
 python3 project/datasets/builder/convert_complexes_to_graphs.py "$PROJDIR"/project/datasets/DB5/final/raw "$PROJDIR"/project/datasets/DB5/final/processed --num_cpus 32 --edge_dist_cutoff 15.0 --edge_limit 5000 --self_loops True --rank "$1" --size "$2"
+```
+
+## How to reassemble DIPS-Plus' "interim" external features
+
+We split the (tar.gz) archive into eight separate parts with
+'split -b 4096M interim_external_feats_dips.tar.gz "interim_external_feats_dips.tar.gz.part"'
+to upload it to Zenodo, so to recover the original archive:
+
+```bash
+# Reassemble external features archive with 'cat'
+cat interim_external_feats_dips.tar.gz.parta* >interim_external_feats_dips.tar.gz
 ```
 
 ## Python 2 to 3 pickle file solution

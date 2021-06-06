@@ -116,7 +116,6 @@ DIPS-Plus
 │   setup.py
 ```
 
-
 ## How to compile DIPS-Plus from scratch
 
 Retrieve protein complexes from the RCSB PDB and build out directory structure:

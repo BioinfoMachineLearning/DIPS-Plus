@@ -5,7 +5,8 @@
 The Enhanced Database of Interacting Protein Structures for Interface Prediction
 
 [![Paper](http://img.shields.io/badge/paper-arxiv.1001.2234-B31B1B.svg)](https://www.nature.com/articles/nature14539)
-[![Conference](http://img.shields.io/badge/NeurIPS-2021-4b44ce.svg)](https://papers.nips.cc/book/advances-in-neural-information-processing-systems-35-2021)
+
+[comment]: <> ([![Conference]&#40;http://img.shields.io/badge/NeurIPS-2021-4b44ce.svg&#41;]&#40;https://papers.nips.cc/book/advances-in-neural-information-processing-systems-35-2021&#41;)
 
 </div>
 
@@ -54,9 +55,6 @@ pip3 install -e .
 
 # Install external pip dependencies in the Conda environment currently activated:
 pip3 install -r requirements.txt
-
-# Install pip dependencies used for unit testing in the Conda environment currently activated:
-pip3 install -r tests/requirements.txt
  ```
 
 ## Default DIPS-Plus directory structure
@@ -244,7 +242,7 @@ block in the Unpickler class' find_class() function
 @article{DIPS-Plus,
   title={DIPS-Plus: The Enhanced Database of Interacting Protein Structures for Interface Prediction},
   author={Alex Morehead, Chen Chen, Ada Sedova, and Jianlin Cheng},
-  journal={Datasets of Machine Learning Research},
+  journal={arXiv},
   year={2021}
 }
 ```

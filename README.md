@@ -2,7 +2,7 @@
 
 # DIPS-Plus
 
-The enhanced Database of Interacting Protein Structures (DIPS)
+The Enhanced Database of Interacting Protein Structures for Interface Prediction
 
 [![Paper](http://img.shields.io/badge/paper-arxiv.1001.2234-B31B1B.svg)](https://www.nature.com/articles/nature14539)
 [![Conference](http://img.shields.io/badge/NeurIPS-2021-4b44ce.svg)](https://papers.nips.cc/book/advances-in-neural-information-processing-systems-35-2021)
@@ -176,8 +176,8 @@ tar -xzf project/datasets/DB5.tar.gz --directory project/datasets/
 
 # Remove (now) redundant DB5 archive and other miscellaneous files:
 rm project/datasets/DB5.tar.gz project/datasets/DB5/.README.swp
-rm project/datasets/DB5.tar.gz "$MYLOCAL"/datasets/DB5/.README.swp
-rm -rf project/datasets/DB5/interim "$MYLOCAL"/datasets/DB5/processed
+rm project/datasets/DB5.tar.gz project/datasets/DB5/.README.swp
+rm -rf project/datasets/DB5/interim project/datasets/DB5/processed
 
 # Create relevant interim and final data directories:
 mkdir project/datasets/DB5/interim project/datasets/DB5/interim/external_feats
@@ -242,7 +242,7 @@ block in the Unpickler class' find_class() function
 
 ```
 @article{DIPS-Plus,
-  title={DIPS-Plus: The Enhanced Database of Interacting Protein Structures},
+  title={DIPS-Plus: The Enhanced Database of Interacting Protein Structures for Interface Prediction},
   author={Alex Morehead, Chen Chen, Ada Sedova, and Jianlin Cheng},
   journal={Datasets of Machine Learning Research},
   year={2021}

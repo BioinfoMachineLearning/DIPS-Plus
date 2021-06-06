@@ -46,7 +46,9 @@ def main(pkl_dataset: str, pruned_dataset: str, hhsuite_db: str, output_dir: str
                 f' with a local MPI world size of {MPI.COMM_WORLD.Get_size()}.'
                 f' This node\'s copy of the BFD is {hhsuite_db}')
 
-    # Generate profile HMMs
+    # Generate profile HMMs #
+    # Run with --write_file=True using one node
+    # Then run with --read_file=True using multiple nodes to distribute workload across nodes and their CPU cores
     map_all_profile_hmms(pkl_dataset, pruned_dataset, output_dir, hhsuite_db, num_cpu_jobs,
                          num_cpus_per_job, source_type, num_iter, rank, size, write_file)
 

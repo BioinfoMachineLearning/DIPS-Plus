@@ -1,6 +1,13 @@
+<div align="center">
+
 # DIPS-Plus
 
 The enhanced Database of Interacting Protein Structures (DIPS)
+
+[![Paper](http://img.shields.io/badge/paper-arxiv.1001.2234-B31B1B.svg)](https://www.nature.com/articles/nature14539)
+[![Conference](http://img.shields.io/badge/NeurIPS-2021-4b44ce.svg)](https://papers.nips.cc/book/advances-in-neural-information-processing-systems-35-2021)
+
+</div>
 
 ## How to run creation tools
 
@@ -13,19 +20,14 @@ git clone https://github.com/amorehead/DIPS-Plus
 # Change to project directory:
 cd DIPS-Plus
 
-# (If on HPC cluster) Load 'open-ce' module
-module load open-ce-1.1.3-py38-0
+# (If on HPC cluster) Download latest 64-bit Linux version of Miniconda and activate it:
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh  # Specify install directory
+source miniconda/bin/activate  # Assuming environment created above is called 'miniconda'
 
-# (If on HPC cluster) Clone Conda environment into this directory using provided 'open-ce' environment:
-conda create --name DIPS-Plus --clone open-ce-1.1.3-py38-0
-
-# (If on HPC cluster - Optional) Create Conda environment in a particular directory using provided 'open-ce' environment:
-conda create --prefix MY_VENV_DIR --clone open-ce-1.1.3-py38-0
-
-# (Else, if on local machine) Set up Conda environment locally
+# Create Conda environment using local 'environment.yml' file:
 conda env create --name DIPS-Plus -f environment.yml
 
-# (Else, if on local machine - Optional) Create Conda environment in a particular directory using local 'environment.yml' file:
+# Create Conda environment in a particular directory using local 'environment.yml' file:
 conda env create --prefix MY-VENV-DIR -f environment.yml
 
 # Activate Conda environment located in the current directory:
@@ -37,7 +39,7 @@ conda activate MY-VENV-DIR
 # (Optional) Deactivate the currently-activated Conda environment:
 conda deactivate
 
-# (If on local machine - Optional) Perform a full update on the Conda environment described in 'environment.yml':
+# Perform a full update on the Conda environment described in 'environment.yml':
 conda env update -f environment.yml --prune
 
 # (Optional) To remove this long prefix in your shell prompt, modify the env_prompt setting in your .condarc file with:
@@ -58,8 +60,10 @@ pip3 install -r tests/requirements.txt
  ```
 
 ## Default DIPS-Plus directory structure
+
 ```
 DIPS-Plus
+│
 └───project
 │    │
 │    └───datasets
@@ -81,6 +85,7 @@ DIPS-Plus
 │    │   │   │   └───pairs
 │    │   │   │
 │    │   │   └───raw
+│    │   │   │
 │    │   │   README
 │    │   │
 │    │   └───DIPS
@@ -104,16 +109,16 @@ DIPS-Plus
 │    │           └───pdb
 │    │
 │    └───utils
-│    │   constants.py
-│    │   utils.py
+│        constants.py
+│        utils.py
 │
-│   .gitignore
-│   environment.yml
-│   LICENSE
-│   README.md
-│   requirements.txt
-│   setup.cfg
-│   setup.py
+.gitignore
+environment.yml
+LICENSE
+README.md
+requirements.txt
+setup.cfg
+setup.py
 ```
 
 ## How to compile DIPS-Plus from scratch

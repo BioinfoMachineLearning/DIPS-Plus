@@ -4,7 +4,7 @@
 
 The Enhanced Database of Interacting Protein Structures for Interface Prediction
 
-[![Paper](http://img.shields.io/badge/paper-arxiv.1001.2234-B31B1B.svg)](https://www.nature.com/articles/nature14539)
+[comment]: <> ([![Paper]&#40;http://img.shields.io/badge/paper-arxiv.1001.2234-B31B1B.svg&#41;]&#40;https://www.nature.com/articles/nature14539&#41;)
 
 [comment]: <> ([![Conference]&#40;http://img.shields.io/badge/NeurIPS-2021-4b44ce.svg&#41;]&#40;https://papers.nips.cc/book/advances-in-neural-information-processing-systems-35-2021&#41;)
 
@@ -239,10 +239,12 @@ block in the Unpickler class' find_class() function
 ### Citation
 
 ```
-@article{DIPS-Plus,
+@article{morehead2021dips,
   title={DIPS-Plus: The Enhanced Database of Interacting Protein Structures for Interface Prediction},
   author={Alex Morehead, Chen Chen, Ada Sedova, and Jianlin Cheng},
-  journal={arXiv},
-  year={2021}
+  year={2021},
+  eprint={N/A},
+  archivePrefix = {arXiv},
+  primaryClass = {cs.LG}
 }
 ```

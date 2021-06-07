@@ -11,8 +11,6 @@ A total of 230 binary protein complexes are included.
 Processing code to regenerate and use the original provided tfrecords is located at
 https://github.com/drorlab/DIPS
 
-MANIFEST
-
 final/
     raw/            - List of all postprocessed (i.e. feature-enriched) pairs.
 

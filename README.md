@@ -240,10 +240,10 @@ block in the Unpickler class' find_class() function
 
 ```
 @article{morehead2021dips,
-  title={DIPS-Plus: The Enhanced Database of Interacting Protein Structures for Interface Prediction},
-  author={Alex Morehead, Chen Chen, Ada Sedova, and Jianlin Cheng},
-  year={2021},
-  eprint={N/A},
+  title = {DIPS-Plus: The Enhanced Database of Interacting Protein Structures for Interface Prediction},
+  author = {Alex Morehead, Chen Chen, Ada Sedova, and Jianlin Cheng},
+  year = {2021},
+  eprint = {N/A},
   archivePrefix = {arXiv},
   primaryClass = {cs.LG}
 }

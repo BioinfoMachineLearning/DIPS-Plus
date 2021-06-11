@@ -8,6 +8,8 @@ The Enhanced Database of Interacting Protein Structures for Interface Prediction
 
 [comment]: <> ([![Conference]&#40;http://img.shields.io/badge/NeurIPS-2021-4b44ce.svg&#41;]&#40;https://papers.nips.cc/book/advances-in-neural-information-processing-systems-35-2021&#41;)
 
+[<img src="https://twixes.gallerycdn.vsassets.io/extensions/twixes/pypi-assistant/1.0.3/1589834023190/Microsoft.VisualStudio.Services.Icons.Default" width="50"/>](https://pypi.org/project/DIPS-Plus/)
+
 </div>
 
 ## How to run creation tools

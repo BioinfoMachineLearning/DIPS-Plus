@@ -962,6 +962,7 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
     # Grab first structure's DataFrame and its feature columns, filtering out non-CA atoms (if requested)
     df0: pd.DataFrame = postprocessed_pair.df0 if impute_atom_features \
         else postprocessed_pair.df0[postprocessed_pair.df0['atom_name'].apply(lambda x: x == 'CA')]
+    df0.iloc[:, 6].replace('NA', np.nan, inplace=True)  # Replace NA (i.e. DSSP-stringified NaN RSA values) with np.nan
     df0_numeric_feat_cols = df0.iloc[:, 6:14]
     df0_hsaacs = []
     for hsaac in df0.iloc[:, 14]:
@@ -1045,6 +1046,7 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
     # Grab second structure's DataFrame and its feature columns, filtering out non-CA atoms (if requested)
     df1: pd.DataFrame = postprocessed_pair.df1 if impute_atom_features \
         else postprocessed_pair.df1[postprocessed_pair.df1['atom_name'].apply(lambda x: x == 'CA')]
+    df1.iloc[:, 6].replace('NA', np.nan, inplace=True)  # Replace NA (i.e. DSSP-stringified NaN RSA values) with np.nan
     df1_numeric_feat_cols = df1.iloc[:, 6:14]
     df1_hsaacs = []
     for hsaac in df1.iloc[:, 14]:

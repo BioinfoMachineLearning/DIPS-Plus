@@ -26,16 +26,6 @@ wheels/
 *.egg
 MANIFEST
 
-# Lightning /research
-test_tube_exp/
-tests/tests_tt_dir/
-tests/save_dir
-default/
-test_tube_logs/
-test_tube_data/
-model_weights/
-processed/
-
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.

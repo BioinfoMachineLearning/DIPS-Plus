@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='DIPS-Plus',
-    version='0.0.4',
+    version='0.0.5',
     description='The Enhanced Database of Interacting Protein Structures for Interface Prediction',
     author='Alex Morehead',
     author_email='alex.morehead@gmail.com',

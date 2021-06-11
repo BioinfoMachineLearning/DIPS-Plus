@@ -154,8 +154,6 @@ def __should_keep(pair_filename: str, to_keep_df: pd.DataFrame):
 # -------------------------------------------------------------------------------------------------------------------------------------
 # Following code adapted from Atom3D (https://github.com/drorlab/atom3d/blob/master/benchmarking/pytorch_geometric/ppi_dataloader.py):
 # -------------------------------------------------------------------------------------------------------------------------------------
-
-
 def prot_df_to_dgl_graph_feats(df: pd.DataFrame, feat_cols: List, allowable_feats: List[List],
                                edge_dist_cutoff: float, edge_limit: int):
     r"""Convert protein in dataframe representation to a graph compatible with DGL, where each node is a residue.

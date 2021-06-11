@@ -950,7 +950,8 @@ def determine_nan_fill_value(column: pd.Series, imputation_method='median'):
     return imputation_value if column.isna().sum().sum() <= NUM_ALLOWABLE_NANS else 0
 
 
-def impute_missing_feature_values(input_pair_filename: str, output_pair_filename: str, impute_atom_features: bool):
+def impute_missing_feature_values(input_pair_filename: str, output_pair_filename: str,
+                                  impute_atom_features: bool, advanced_logging: bool):
     """Impute missing feature values in a postprocessed dataset."""
     # Look at a .dill file in the given output directory
     postprocessed_pair: pa.Pair = pd.read_pickle(input_pair_filename)
@@ -991,14 +992,15 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
                     df0_amide_normal_vecs_have_nan or \
                     df0_has_nan
     if df0_nan_found:
-        logging.info(f"""Before Feature Imputation:
-                        | df0 (from {input_pair_filename}) contained at least one NaN value |
-                        df0_numeric_feat_cols_have_nan: {df0_numeric_feat_cols_have_nan}
-                        df0_hsaacs_have_nan: {df0_hsaacs_have_nan}
-                        df0_cns_have_nan: {df0_cns_have_nan}
-                        df0_sequence_feats_have_nan: {df0_sequence_feats_have_nan}
-                        df0_amide_normal_vecs_have_nan: {df0_amide_normal_vecs_have_nan}
-                        df0_has_nan: {df0_has_nan}""")
+        if advanced_logging:
+            logging.info(f"""Before Feature Imputation:
+                            | df0 (from {input_pair_filename}) contained at least one NaN value |
+                            df0_numeric_feat_cols_have_nan: {df0_numeric_feat_cols_have_nan}
+                            df0_hsaacs_have_nan: {df0_hsaacs_have_nan}
+                            df0_cns_have_nan: {df0_cns_have_nan}
+                            df0_sequence_feats_have_nan: {df0_sequence_feats_have_nan}
+                            df0_amide_normal_vecs_have_nan: {df0_amide_normal_vecs_have_nan}
+                            df0_has_nan: {df0_has_nan}""")
 
     # Impute first structure's missing feature values uniquely for each column
     df0_numeric_feat_cols = df0_numeric_feat_cols.apply(lambda col: col.fillna(determine_nan_fill_value(col)), axis=0)
@@ -1074,14 +1076,15 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
                     df1_amide_normal_vecs_have_nan or \
                     df1_has_nan
     if df1_nan_found:
-        logging.info(f"""Before Feature Imputation:
-                    | df1 (from {input_pair_filename}) contained at least one NaN value |
-                    df1_numeric_feat_cols_have_nan: {df1_numeric_feat_cols_have_nan}
-                    df1_hsaacs_have_nan: {df1_hsaacs_have_nan}
-                    df1_cns_have_nan: {df1_cns_have_nan}
-                    df1_sequence_feats_have_nan: {df1_sequence_feats_have_nan}
-                    df1_amide_normal_vecs_have_nan: {df1_amide_normal_vecs_have_nan}
-                    df1_has_nan: {df1_has_nan}""")
+        if advanced_logging:
+            logging.info(f"""Before Feature Imputation:
+                        | df1 (from {input_pair_filename}) contained at least one NaN value |
+                        df1_numeric_feat_cols_have_nan: {df1_numeric_feat_cols_have_nan}
+                        df1_hsaacs_have_nan: {df1_hsaacs_have_nan}
+                        df1_cns_have_nan: {df1_cns_have_nan}
+                        df1_sequence_feats_have_nan: {df1_sequence_feats_have_nan}
+                        df1_amide_normal_vecs_have_nan: {df1_amide_normal_vecs_have_nan}
+                        df1_has_nan: {df1_has_nan}""")
 
     # Impute second structure's missing feature values uniquely for each column
     df1_numeric_feat_cols = df1_numeric_feat_cols.apply(lambda col: col.fillna(determine_nan_fill_value(col)), axis=0)

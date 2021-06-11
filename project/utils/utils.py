@@ -992,7 +992,7 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
                     df0_has_nan
     if df0_nan_found:
         logging.info(f"""Before Feature Imputation:
-                        | df0 contained at least one NaN value |
+                        | df0 (from {input_pair_filename}) contained at least one NaN value |
                         df0_numeric_feat_cols_have_nan: {df0_numeric_feat_cols_have_nan}
                         df0_hsaacs_have_nan: {df0_hsaacs_have_nan}
                         df0_cns_have_nan: {df0_cns_have_nan}
@@ -1031,7 +1031,7 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
                     df0_has_nan
     if df0_nan_found:
         raise Exception(f"""After Feature Imputation:
-                        | df0 contained at least one NaN value |
+                        | df0 (from {input_pair_filename}) contained at least one NaN value |
                         df0_numeric_feat_cols_have_nan: {df0_numeric_feat_cols_have_nan}
                         df0_hsaacs_have_nan: {df0_hsaacs_have_nan}
                         df0_cns_have_nan: {df0_cns_have_nan}
@@ -1075,7 +1075,7 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
                     df1_has_nan
     if df1_nan_found:
         logging.info(f"""Before Feature Imputation:
-                    | df1 contained at least one NaN value |
+                    | df1 (from {input_pair_filename}) contained at least one NaN value |
                     df1_numeric_feat_cols_have_nan: {df1_numeric_feat_cols_have_nan}
                     df1_hsaacs_have_nan: {df1_hsaacs_have_nan}
                     df1_cns_have_nan: {df1_cns_have_nan}
@@ -1113,7 +1113,7 @@ def impute_missing_feature_values(input_pair_filename: str, output_pair_filename
                     df1_has_nan
     if df1_nan_found:
         raise Exception(f"""After Feature Imputation:
-                        | df1 contained at least one NaN value |
+                        | df1 (from {input_pair_filename}) contained at least one NaN value |
                         df1_numeric_feat_cols_have_nan: {df1_numeric_feat_cols_have_nan}
                         df1_hsaacs_have_nan: {df1_hsaacs_have_nan}
                         df1_cns_have_nan: {df1_cns_have_nan}

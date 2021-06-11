@@ -68,7 +68,7 @@ DEFAULT_MISSING_SEQUENCE_FEATS = np.array([DEFAULT_MISSING_FEAT_VALUE for _ in r
 DEFAULT_MISSING_NORM_VEC = [DEFAULT_MISSING_FEAT_VALUE for _ in range(3)]
 
 # Default number of NaN values allowed in a specific column before imputing missing features of the column with zero
-NUM_ALLOWABLE_NANS = 10
+NUM_ALLOWABLE_NANS = 5
 
 # Features to be one-hot encoded during graph processing and what their values could be
 FEAT_COLS = [

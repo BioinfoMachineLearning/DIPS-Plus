@@ -10,7 +10,7 @@ from project.utils.utils import get_global_node_rank, impute_missing_feature_val
 
 @click.command()
 @click.argument('output_dir', default='../DIPS/final/raw', type=click.Path())
-@click.option('--impute_atom_features', '-a', default=True)
+@click.option('--impute_atom_features', '-a', default=False)
 @click.option('--advanced_logging', '-l', default=False)
 @click.option('--num_cpus', '-c', default=1)
 @click.option('--rank', '-r', default=0)

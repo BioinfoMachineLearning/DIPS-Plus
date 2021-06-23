@@ -16,6 +16,19 @@ The Enhanced Database of Interacting Protein Structures for Interface Prediction
 
 </div>
 
+## Citation
+
+```
+@misc{morehead2021dipsplus,
+      title={DIPS-Plus: The Enhanced Database of Interacting Protein Structures for Interface Prediction}, 
+      author={Alex Morehead and Chen Chen and Ada Sedova and Jianlin Cheng},
+      year={2021},
+      eprint={2106.04362},
+      archivePrefix={arXiv},
+      primaryClass={q-bio.QM}
+}
+```
+
 ## How to run creation tools
 
 First, install and configure Conda environment:
@@ -241,16 +254,3 @@ if self.proto < 3 and self.fix_imports:
 
 block in the Unpickler class' find_class() function
 (e.g. line 1577 of Python 3.8.5's pickle.py).
-
-### Citation
-
-```
-@misc{morehead2021dipsplus,
-      title={DIPS-Plus: The Enhanced Database of Interacting Protein Structures for Interface Prediction}, 
-      author={Alex Morehead and Chen Chen and Ada Sedova and Jianlin Cheng},
-      year={2021},
-      eprint={2106.04362},
-      archivePrefix={arXiv},
-      primaryClass={q-bio.QM}
-}
-```

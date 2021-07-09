@@ -12,17 +12,17 @@ ATOM_COUNT_LIMIT = 17500  # Default filter for both datasets when encoding compl
 RCSB_BASE_URL = 'ftp://ftp.wwpdb.org/pub/pdb/data/biounit/coordinates/divided/'
 
 # The PDB codes of structures added between DB4 and DB5 (to be used for testing dataset)
-DB5_TEST_PDB_CODES = ['2VXT', '2W9E', '3EOA', '3HMX', '3MXW',
-                      '3RVW', '4DN4', '4FQI', '4G6J', '4G6M',
-                      '4GXU', '1JTD', '2A1A', '2GAF', '2YVJ',
-                      '3A4S', '3K75', '3LVK', '3PC8', '3VLB',
-                      '4HX3', '4H03', '1EXB', '1M27', '2GTP',
-                      '2X9A', '3BIW', '3H2V', '3P57', '4M76',
-                      '3EO1', '3G6D', '3HI6', '3L5W', '3V6Z',
-                      '4FZA', '4IZ7', '4LW4', '3AAA', '3AAD',
-                      '3BX7', '3DAW', '3R9A', '3SZK', '3S9D',
-                      '4JCV', '3FN1', '3H11', '4GAM', '1RKE',
-                      '3AAD', '3F1P', '3L89', '1BVK', '1BGX']
+DB5_TEST_PDB_CODES = ['3R9A', '4GAM', '3AAA', '4H03', '1EXB',
+                      '2GAF', '2GTP', '3RVW', '3SZK', '4IZ7',
+                      '4GXU', '3BX7', '2YVJ', '3V6Z', '1M27',
+                      '4FQI', '4G6J', '3BIW', '3PC8', '3HI6',
+                      '2X9A', '3HMX', '2W9E', '4G6M', '3LVK',
+                      '1JTD', '3H2V', '4DN4', 'BP57', '3L5W',
+                      '3A4S', 'CP57', '3DAW', '3VLB', '3K75',
+                      '2VXT', '3G6D', '3EO1', '4JCV', '4HX3',
+                      '3F1P', '3AAD', '3EOA', '3MXW', '3L89',
+                      '4M76', 'BAAD', '4FZA', '4LW4', '1RKE',
+                      '3FN1', '3S9D', '3H11', '2A1A', '3P57']
 
 # Postprocessing logger dictionary
 DEFAULT_DATASET_STATISTICS = dict(num_of_processed_complexes=0, num_of_df0_residues=0, num_of_df1_residues=0,

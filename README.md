@@ -29,6 +29,16 @@ The Enhanced Database of Interacting Protein Structures for Interface Prediction
 }
 ```
 
+## Versioning
+
+* Version 1.0.0: Initial release of DIPS-Plus and DB5-Plus (DOI: 10.5281/zenodo.4815267)
+* Version 1.1.0: Minor updates to DIPS-Plus and DB5-Plus' tar archives (DOI: 10.5281/zenodo.5134732)
+  * DIPS-Plus' final 'raw' tar archive now includes standardized 80%-20% lists of filenames for training and validation, respectively
+  * DB5-Plus' final 'raw' tar archive now includes (optional) standardized lists of filenames for training and validation, respectively
+  * DB5-Plus' final 'raw' tar archive now also includes a corrected list of filenames for its 55 test complexes
+    * Benchmark results included in our paper were run after this issue was resolved
+    * However, if you ran experiments using DB5-Plus' filename list for its test complexes, please re-run them using the latest list
+
 ## How to run creation tools
 
 First, install and configure Conda environment:

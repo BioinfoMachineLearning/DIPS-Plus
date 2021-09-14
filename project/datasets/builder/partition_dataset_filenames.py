@@ -1,12 +1,12 @@
 import logging
 import os
+import random
 from pathlib import Path
 
 import atom3.pair as pa
 import click
 import pandas as pd
 from atom3 import database as db
-from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
 from project.utils.constants import DB5_TEST_PDB_CODES, ATOM_COUNT_LIMIT
@@ -64,15 +64,25 @@ def main(output_dir: str, source_type: str, filter_by_atom_count: bool, max_atom
             if not os.path.exists(pairs_postprocessed_val_txt):  # Create val data list if not already existent
                 open(pairs_postprocessed_val_txt, 'w').close()
             # Write out training-validation partitions for DIPS
+            output_dirs = [filename
+                           for filename in os.listdir(output_dir)
+                           if os.path.isdir(os.path.join(output_dir, filename))]
+            # Get training and validation directories separately
+            num_train_dirs = int(0.8 * len(output_dirs))
+            train_dirs = random.sample(output_dirs, num_train_dirs)
+            val_dirs = list(set(output_dirs) - set(train_dirs))
+            # Ascertain training and validation filename separately
             filenames_frame = pd.read_csv(pairs_postprocessed_txt, header=None)
-            train_filenames_frame, val_filenames_frame, _, _ = train_test_split(
-                filenames_frame,
-                # Ignore labels for now - will create feature vectors in dataset class
-                [None for _ in range(len(filenames_frame))],
-                train_size=(8 / 10),
-                test_size=(2 / 10)
-            )
+            train_filenames = [os.path.join(train_dir, filename)
+                               for train_dir in train_dirs
+                               for filename in os.listdir(os.path.join(output_dir, train_dir))
+                               if os.path.join(train_dir, filename) in filenames_frame.values]
+            val_filenames = [os.path.join(val_dir, filename)
+                             for val_dir in val_dirs
+                             for filename in os.listdir(os.path.join(output_dir, val_dir))
+                             if os.path.join(val_dir, filename) in filenames_frame.values]
             # Create separate .txt files to describe the training list and validation list, respectively
+            train_filenames_frame, val_filenames_frame = pd.DataFrame(train_filenames), pd.DataFrame(val_filenames)
             train_filenames_frame.to_csv(pairs_postprocessed_train_txt, header=None, index=None, sep=' ', mode='a')
             val_filenames_frame.to_csv(pairs_postprocessed_val_txt, header=None, index=None, sep=' ', mode='a')
 

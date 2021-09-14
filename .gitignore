@@ -126,3 +126,9 @@ project/datasets/DB5/raw/**
 project/datasets/DB5/interim/**
 project/datasets/DB5/final/raw/**
 project/datasets/DB5/final/final_raw_db5.tar.gz*
+
+# EVCoupling
+project/datasets/EVCoupling/raw/**
+project/datasets/EVCoupling/interim/**
+project/datasets/EVCoupling/final/raw/**
+project/datasets/EVCoupling/final/processed/**

@@ -15,4 +15,4 @@ hydro_file: /home/acmwhb/data/DIPS-Plus/project/datasets/builder/psaia_hydrophob
 radii_filename: /home/acmwhb/data/DIPS-Plus/project/datasets/builder/psaia_chothia.radii
 write_xml: 0
 write_table: 1
-output_dir: /home/acmwhb/data/DIPS-Plus/project/datasets/EVCoupling/interim/external_feats/PSAIA/EVCoupling
+output_dir: /home/acmwhb/data/DIPS-Plus/project/datasets/EVCoupling/interim/external_feats/PSAIA/EVCOUPLING

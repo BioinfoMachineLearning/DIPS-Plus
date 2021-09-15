@@ -18,7 +18,7 @@ from project.utils.utils import get_global_node_rank
 @click.argument('pkl_dataset', type=click.Path(exists=True))
 @click.argument('pruned_dataset', type=click.Path(exists=True))
 @click.argument('output_dir', type=click.Path())
-@click.option('--source_type', default='rcsb', type=click.Choice(['rcsb', 'db5']))
+@click.option('--source_type', default='rcsb', type=click.Choice(['rcsb', 'db5', 'evcoupling']))
 @click.option('--rank', '-r', default=0)
 @click.option('--size', '-s', default=1)
 def main(psaia_dir: str, psaia_config: str, pdb_dataset: str, pkl_dataset: str,

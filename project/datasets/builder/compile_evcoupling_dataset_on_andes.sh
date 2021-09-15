@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ####################### Batch Headers #########################
-#SBATCH -A BIP198
+#SBATCH -A BIF135
 #SBATCH -p batch
 #SBATCH -J make_evcoupling_dataset
 #SBATCH -t 0-12:00

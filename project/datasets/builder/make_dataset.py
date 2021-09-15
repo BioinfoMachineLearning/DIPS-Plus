@@ -22,7 +22,7 @@ from project.utils.utils import get_global_node_rank
 @click.option('--neighbor_def', default='non_heavy_res',
               type=click.Choice(['non_heavy_res', 'non_heavy_atom', 'ca_res', 'ca_atom']))
 @click.option('--cutoff', default=6)
-@click.option('--source_type', default='rcsb', type=click.Choice(['rcsb', 'db5']))
+@click.option('--source_type', default='rcsb', type=click.Choice(['rcsb', 'db5', 'evcoupling']))
 @click.option('--unbound/--bound', default=False)
 def main(input_dir: str, output_dir: str, num_cpus: int, rank: int, size: int,
          neighbor_def: str, cutoff: int, source_type: str, unbound: bool):

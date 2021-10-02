@@ -23,7 +23,7 @@ from project.utils.utils import get_global_node_rank
 @click.option('--num_cpu_jobs', '-j', default=cpu_count() // 2, type=int)
 @click.option('--num_cpus_per_job', '-c', default=2, type=int)
 @click.option('--num_iter', '-i', default=2, type=int)
-@click.option('--source_type', default='rcsb', type=click.Choice(['rcsb', 'db5']))
+@click.option('--source_type', default='rcsb', type=click.Choice(['rcsb', 'db5', 'evcoupling', 'casp_capri']))
 @click.option('--write_file/--read_file', '-w', default=True)
 def main(pkl_dataset: str, pruned_dataset: str, hhsuite_db: str, output_dir: str, rank: int,
          size: int, num_cpu_jobs: int, num_cpus_per_job: int, num_iter: int, source_type: str, write_file: bool):

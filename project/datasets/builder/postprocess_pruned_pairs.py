@@ -19,7 +19,7 @@ from project.utils.utils import postprocess_pruned_pairs
 @click.option('--num_cpus', '-c', default=1)
 @click.option('--rank', '-r', default=0)
 @click.option('--size', '-s', default=1)
-@click.option('--source_type', default='rcsb', type=click.Choice(['rcsb', 'db5']))
+@click.option('--source_type', default='rcsb', type=click.Choice(['rcsb', 'db5', 'evcoupling', 'casp_capri']))
 def main(raw_pdb_dir: str, pruned_pairs_dir: str, external_feats_dir: str, output_dir: str,
          num_cpus: int, rank: int, size: int, source_type: str):
     """Run postprocess_pruned_pairs on all provided complexes."""
@@ -41,7 +41,7 @@ def main(raw_pdb_dir: str, pruned_pairs_dir: str, external_feats_dir: str, outpu
     produced_filenames = get_structures_filenames(output_dir, extension='.dill')
     produced_keys = [get_pdb_name(x) for x in produced_filenames]
     work_keys = [key for key in requested_keys if key not in produced_keys]
-    rscb_pruned_pair_ext = '.dill' if source_type.lower() == 'rcsb' else ''
+    rscb_pruned_pair_ext = '.dill' if source_type.lower() in ['rcsb', 'evcoupling', 'casp_capri'] else ''
     work_filenames = [os.path.join(pruned_pairs_dir, get_pdb_code(work_key)[1:3], work_key + rscb_pruned_pair_ext)
                       for work_key in work_keys]
     logger.info(f'Found {len(work_keys)} work pair(s) in {pruned_pairs_dir}')
@@ -58,7 +58,7 @@ def main(raw_pdb_dir: str, pruned_pairs_dir: str, external_feats_dir: str, outpu
         if not os.path.exists(sub_dir):
             os.mkdir(sub_dir)
         new_output_filename = sub_dir + '/' + get_pdb_name(pdb_filename) + ".dill" if \
-            source_type == 'rcsb' else \
+            source_type in ['rcsb', 'evcoupling', 'casp_capri'] else \
             sub_dir + '/' + get_pdb_name(pdb_filename)
         output_filenames.append(new_output_filename)
 

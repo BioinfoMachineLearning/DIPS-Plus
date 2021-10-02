@@ -203,7 +203,6 @@ tar -xzf project/datasets/DB5.tar.gz --directory project/datasets/
 
 # Remove (now) redundant DB5 archive and other miscellaneous files:
 rm project/datasets/DB5.tar.gz project/datasets/DB5/.README.swp
-rm project/datasets/DB5.tar.gz project/datasets/DB5/.README.swp
 rm -rf project/datasets/DB5/interim project/datasets/DB5/processed
 
 # Create relevant interim and final data directories:

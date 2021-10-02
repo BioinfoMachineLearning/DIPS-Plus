@@ -15,7 +15,7 @@ from project.utils.utils import get_global_node_rank
 
 @click.command()
 @click.argument('output_dir', default='../DIPS/final/raw', type=click.Path())
-@click.option('--source_type', default='rcsb', type=click.Choice(['rcsb', 'db5']))
+@click.option('--source_type', default='rcsb', type=click.Choice(['rcsb', 'db5', 'evcoupling', 'casp_capri']))
 @click.option('--filter_by_atom_count', '-f', default=False)
 @click.option('--max_atom_count', '-l', default=ATOM_COUNT_LIMIT)
 @click.option('--rank', '-r', default=0)

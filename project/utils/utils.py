@@ -600,6 +600,7 @@ def postprocess_pruned_pairs(raw_pdb_dir: str, external_feats_dir: str, pair_fil
 
 def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: str, original_pair, source_type: str):
     """Construct a new Pair consisting of residues of structures with DSSP-derivable features and append DSSP secondary structure (SS) features to each protein structure dataframe as well."""
+    chains_selected = [original_pair.df0['chain'][0], original_pair.df1['chain'][0]]
     df0_ss_values, df0_rsa_values, df0_rd_values, df0_protrusion_indices, \
     df0_hsaacs, df0_cn_values, df0_sequence_feats, df0_amide_norm_vecs, \
     df1_ss_values, df1_rsa_values, df1_rd_values, df1_protrusion_indices, \
@@ -612,7 +613,7 @@ def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: st
     dssp_dicts, rd_dicts, psaia_dfs, coordinate_numbers_list, hsaac_matrices, sequence_feats_dfs = [], [], [], \
                                                                                                    [], [], []
     for struct_idx, raw_pdb_filename in enumerate(raw_pdb_filenames):
-        is_rcsb_complex = source_type.lower() == 'rcsb'
+        is_rcsb_complex = source_type.lower() in ['rcsb', 'evcoupling', 'casp_capri']
 
         # Extract the FASTA sequence(s) for a given PDB file
         sequences = find_fasta_sequences_for_pdb_file(sequences,
@@ -627,7 +628,8 @@ def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: st
             # Derive BioPython structure and residues for the given PDB file
             structure = PDB_PARSER.get_structure(original_pair.complex, raw_pdb_filename)  # PDB structure
             # Filter out all hetero residues including waters to leave only amino and nucleic acids
-            residues = [residue for residue in Selection.unfold_entities(structure, 'R') if residue.get_id()[0] == ' ']
+            residues = [residue for residue in Selection.unfold_entities(structure, 'R')
+                        if residue.get_id()[0] == ' ' and residue.get_parent().id in chains_selected]
 
             # Extract DSSP secondary structure (SS) and relative solvent accessibility (RSA) values for the 1st model
             dssp_dict = get_dssp_dict_for_pdb_model(structure[0], raw_pdb_filename)  # Only for 1st model
@@ -1055,7 +1057,7 @@ def get_raw_pdb_filename_from_interim_filename(interim_filename: str, raw_pdb_di
     slash_tokens = pdb_name.split(os.path.sep)
     slash_dot_tokens = slash_tokens[-1].split(".")
     raw_pdb_filename = os.path.join(raw_pdb_dir, slash_tokens[-2], slash_dot_tokens[0]) + '.' + slash_dot_tokens[1] if \
-        source_type == 'rcsb' else \
+        source_type.lower() in ['rcsb', 'evcoupling', 'casp_capri'] else \
         os.path.join(raw_pdb_dir, slash_dot_tokens[0].split('_')[0], slash_dot_tokens[0]) + '.' + slash_dot_tokens[1]
     return raw_pdb_filename
 

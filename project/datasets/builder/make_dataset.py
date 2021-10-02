@@ -22,7 +22,7 @@ from project.utils.utils import get_global_node_rank
 @click.option('--neighbor_def', default='non_heavy_res',
               type=click.Choice(['non_heavy_res', 'non_heavy_atom', 'ca_res', 'ca_atom']))
 @click.option('--cutoff', default=6)
-@click.option('--source_type', default='rcsb', type=click.Choice(['rcsb', 'db5']))
+@click.option('--source_type', default='rcsb', type=click.Choice(['rcsb', 'db5', 'evcoupling', 'casp_capri']))
 @click.option('--unbound/--bound', default=False)
 def main(input_dir: str, output_dir: str, num_cpus: int, rank: int, size: int,
          neighbor_def: str, cutoff: int, source_type: str, unbound: bool):
@@ -44,7 +44,7 @@ def main(input_dir: str, output_dir: str, num_cpus: int, rank: int, size: int,
         get_neighbors = nb.build_get_neighbors(neighbor_def, cutoff)
         get_pairs = pair.build_get_pairs(neighbor_def, source_type, unbound, get_neighbors, False)
         complexes = comp.read_complexes(complexes_dill)
-        pair.all_complex_to_pairs(complexes, get_pairs, pairs_dir, num_cpus)
+        pair.all_complex_to_pairs(complexes, source_type, get_pairs, pairs_dir, num_cpus)
 
 
 if __name__ == '__main__':

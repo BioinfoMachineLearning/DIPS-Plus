@@ -132,3 +132,9 @@ project/datasets/EVCoupling/raw/**
 project/datasets/EVCoupling/interim/**
 project/datasets/EVCoupling/final/raw/**
 project/datasets/EVCoupling/final/processed/**
+
+# CASP-CAPRI
+project/datasets/CASP-CAPRI/raw/**
+project/datasets/CASP-CAPRI/interim/**
+project/datasets/CASP-CAPRI/final/raw/**
+project/datasets/CASP-CAPRI/final/processed/**

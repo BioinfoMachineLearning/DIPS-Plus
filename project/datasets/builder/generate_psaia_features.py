@@ -6,7 +6,7 @@ import logging
 import os
 
 import click
-from atom3.conservation import map_all_protrusion_indices
+import atom3.conservation as con
 
 from project.utils.utils import get_global_node_rank
 
@@ -39,7 +39,7 @@ def main(psaia_dir: str, psaia_config: str, pdb_dataset: str, pkl_dataset: str,
             os.environ["PATH"] += os.path.sep + PSAIA_PATH
 
         # Generate protrusion indices
-        map_all_protrusion_indices(psaia_config, pdb_dataset, pkl_dataset, pruned_dataset, output_dir, source_type)
+        con.map_all_protrusion_indices(psaia_config, pdb_dataset, pkl_dataset, pruned_dataset, output_dir, source_type)
 
 
 if __name__ == '__main__':

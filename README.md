@@ -18,7 +18,7 @@ The Enhanced Database of Interacting Protein Structures for Interface Prediction
 
 ## Citation
 
-```
+```bibtex
 @misc{morehead2021dipsplus,
       title={DIPS-Plus: The Enhanced Database of Interacting Protein Structures for Interface Prediction}, 
       author={Alex Morehead and Chen Chen and Ada Sedova and Jianlin Cheng},

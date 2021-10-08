@@ -39,7 +39,8 @@ def main(psaia_dir: str, psaia_config: str, pdb_dataset: str, pkl_dataset: str,
             os.environ["PATH"] += os.path.sep + PSAIA_PATH
 
         # Generate protrusion indices
-        con.map_all_protrusion_indices(psaia_config, pdb_dataset, pkl_dataset, pruned_dataset, output_dir, source_type)
+        con.map_all_protrusion_indices(psaia_dir, psaia_config, pdb_dataset, pkl_dataset,
+                                       pruned_dataset, output_dir, source_type)
 
 
 if __name__ == '__main__':

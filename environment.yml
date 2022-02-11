@@ -22,4 +22,4 @@ dependencies:
   #  - dgl-cudaXX.X  # Replace XX.X with the version of cudatoolkit installed by 'conda install pytorch -c pytorch -c conda-forge' directly above
   - pip:
       - -e .
-      - -r file:requirements.txt
+      - -r requirements.txt

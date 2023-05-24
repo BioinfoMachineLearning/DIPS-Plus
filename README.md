@@ -40,7 +40,7 @@ Then, create and configure Mamba environment:
 
 ```bash
 # Clone project:
-git clone https://github.com/amorehead/DIPS-Plus
+git clone https://github.com/BioinfoMachineLearning/DIPS-Plus
 cd DIPS-Plus
 
 # Create Conda environment using local 'environment.yml' file:
@@ -49,7 +49,6 @@ conda activate DIPS-Plus  # Note: One still needs to use `conda` to (de)activate
 
 # Install local project as package:
 pip3 install -e .
-pip3 install -r requirements.txt
 ```
 
 ## Default DIPS-Plus directory structure

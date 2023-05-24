@@ -16,19 +16,6 @@ The Enhanced Database of Interacting Protein Structures for Interface Prediction
 
 </div>
 
-## Citation
-
-```bibtex
-@misc{morehead2021dipsplus,
-      title={DIPS-Plus: The Enhanced Database of Interacting Protein Structures for Interface Prediction}, 
-      author={Alex Morehead and Chen Chen and Ada Sedova and Jianlin Cheng},
-      year={2021},
-      eprint={2106.04362},
-      archivePrefix={arXiv},
-      primaryClass={q-bio.QM}
-}
-```
-
 ## Versioning
 
 * Version 1.0.0: Initial release of DIPS-Plus and DB5-Plus (DOI: 10.5281/zenodo.4815267)
@@ -41,50 +28,29 @@ The Enhanced Database of Interacting Protein Structures for Interface Prediction
 
 ## How to run creation tools
 
-First, install and configure Conda environment:
+First, download Mamba (if not already downloaded):
+```bash
+wget "https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-$(uname)-$(uname -m).sh"
+bash Mambaforge-$(uname)-$(uname -m).sh  # Accept all terms and install to the default location
+rm Mambaforge-$(uname)-$(uname -m).sh  # (Optionally) Remove installer after using it
+source ~/.bashrc  # Alternatively, one can restart their shell session to achieve the same result
+```
+
+Then, create and configure Mamba environment:
 
 ```bash
 # Clone project:
 git clone https://github.com/amorehead/DIPS-Plus
-
-# Change to project directory:
 cd DIPS-Plus
 
-# (If on HPC cluster) Download latest 64-bit Linux version of Miniconda and activate it:
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh  # Specify install directory
-source miniconda/bin/activate  # Assuming environment created above is called 'miniconda'
-
 # Create Conda environment using local 'environment.yml' file:
-conda env create --name DIPS-Plus -f environment.yml
+mamba env create -f environment.yml
+conda activate DIPS-Plus  # Note: One still needs to use `conda` to (de)activate environments
 
-# Create Conda environment in a particular directory using local 'environment.yml' file:
-conda env create --prefix MY-VENV-DIR -f environment.yml
-
-# Activate Conda environment located in the current directory:
-conda activate DIPS-Plus
-
-# (Optional) Activate Conda environment located in another directory:
-conda activate MY-VENV-DIR
-
-# (Optional) Deactivate the currently-activated Conda environment:
-conda deactivate
-
-# Perform a full update on the Conda environment described in 'environment.yml':
-conda env update -f environment.yml --prune
-
-# (Optional) To remove this long prefix in your shell prompt, modify the env_prompt setting in your .condarc file with:
-conda config --set env_prompt '({name})'
- ```
-
-(If on HPC cluster) Install all project dependencies:
-
-```bash
-# Install project as a pip dependency in the Conda environment currently activated:
+# Install local project as package:
 pip3 install -e .
-
-# Install external pip dependencies in the Conda environment currently activated:
 pip3 install -r requirements.txt
- ```
+```
 
 ## Default DIPS-Plus directory structure
 
@@ -263,3 +229,17 @@ if self.proto < 3 and self.fix_imports:
 
 block in the Unpickler class' find_class() function
 (e.g. line 1577 of Python 3.8.5's pickle.py).
+
+## Citation
+If you find DIPS-Plus useful in your research, please cite:
+
+```bibtex
+@misc{morehead2021dipsplus,
+      title={DIPS-Plus: The Enhanced Database of Interacting Protein Structures for Interface Prediction}, 
+      author={Alex Morehead and Chen Chen and Ada Sedova and Jianlin Cheng},
+      year={2021},
+      eprint={2106.04362},
+      archivePrefix={arXiv},
+      primaryClass={q-bio.QM}
+}
+```

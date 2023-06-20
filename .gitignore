@@ -111,6 +111,12 @@ venv.tar.gz
 .idea
 .vscode
 
+# TensorBoard
+tb_logs/
+
+# Feature Processing
+*work_filenames*.csv
+
 # DIPS
 project/datasets/DIPS/complexes/**
 project/datasets/DIPS/interim/**
@@ -119,6 +125,7 @@ project/datasets/DIPS/parsed/**
 project/datasets/DIPS/raw/**
 project/datasets/DIPS/final/raw/**
 project/datasets/DIPS/final/final_raw_dips.tar.gz*
+project/datasets/DIPS/final/processed/**
 
 # DB5
 project/datasets/DB5/processed/**
@@ -126,6 +133,7 @@ project/datasets/DB5/raw/**
 project/datasets/DB5/interim/**
 project/datasets/DB5/final/raw/**
 project/datasets/DB5/final/final_raw_db5.tar.gz*
+project/datasets/DB5/final/processed/**
 
 # EVCoupling
 project/datasets/EVCoupling/raw/**
@@ -138,3 +146,6 @@ project/datasets/CASP-CAPRI/raw/**
 project/datasets/CASP-CAPRI/interim/**
 project/datasets/CASP-CAPRI/final/raw/**
 project/datasets/CASP-CAPRI/final/processed/**
+
+# Input
+project/datasets/Input/**

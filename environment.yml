@@ -11,6 +11,11 @@ dependencies:
   - _libgcc_mutex=0.1=conda_forge
   - _openmp_mutex=4.5=2_kmp_llvm
   - appdirs=1.4.4=pyhd3eb1b0_0
+  - asttokens=2.2.1=pyhd8ed1ab_0
+  - backcall=0.2.0=pyh9f0ad1d_0
+  - backports=1.0=pyhd8ed1ab_3
+  - backports.functools_lru_cache=1.6.4=pyhd8ed1ab_0
+  - binutils_impl_linux-64=2.36.1=h193b22a_2
   - biopython=1.78=py38h7f8727e_0
   - blas=1.0=openblas
   - bottleneck=1.3.5=py38h7deecbd_0
@@ -21,6 +26,7 @@ dependencies:
   - cffi=1.15.1=py38h5eee18b_3
   - charset-normalizer=2.0.4=pyhd3eb1b0_0
   - colorama=0.4.6=pyhd8ed1ab_0
+  - comm=0.1.3=pyhd8ed1ab_0
   - cryptography=40.0.2=py38h3d167d9_0
   - cuda=11.6.1=0
   - cuda-cccl=11.6.55=hf6102b2_0
@@ -56,21 +62,37 @@ dependencies:
   - cuda-visual-tools=11.6.1=0
   - cudatoolkit=11.7.0=hd8887f6_10
   - cudnn=8.8.0.121=h0800d71_0
+  - debugpy=1.6.7=py38h8dc9893_0
+  - decorator=5.1.1=pyhd8ed1ab_0
   - dgl=1.1.0.cu116=py38_0
   - dssp=3.0.0=h3fd9d12_4
+  - executing=1.2.0=pyhd8ed1ab_0
   - ffmpeg=4.3=hf484d3e_0
   - freetype=2.12.1=hca18f0e_1
+  - gcc=10.3.0=he2824d0_10
+  - gcc_impl_linux-64=10.3.0=hf2f2afa_16
   - gds-tools=1.6.1.9=0
   - gmp=6.2.1=h58526e2_0
   - gnutls=3.6.13=h85f3911_1
+  - gxx=10.3.0=he2824d0_10
+  - gxx_impl_linux-64=10.3.0=hf2f2afa_16
   - hhsuite=3.3.0=py38pl5321hcbe9525_8
+  - hmmer=3.3.2=hdbdd923_4
   - icu=58.2=he6710b0_3
   - idna=3.4=py38h06a4308_0
+  - importlib-metadata=6.6.0=pyha770c72_0
+  - importlib_metadata=6.6.0=hd8ed1ab_0
+  - ipykernel=6.23.1=pyh210e3f2_0
+  - ipython=8.4.0=py38h578d9bd_0
+  - jedi=0.18.2=pyhd8ed1ab_0
   - joblib=1.1.1=py38h06a4308_0
   - jpeg=9e=h0b41bf4_3
+  - jupyter_client=8.2.0=pyhd8ed1ab_0
+  - jupyter_core=4.12.0=py38h578d9bd_0
+  - kernel-headers_linux-64=2.6.32=he073ed8_15
   - lame=3.100=h166bdaf_1003
   - lcms2=2.15=hfd0df8a_0
-  - ld_impl_linux-64=2.38=h1181459_1
+  - ld_impl_linux-64=2.36.1=hea4e1c9_2
   - lerc=4.0.0=h27087fc_0
   - libblas=3.9.0=16_linux64_openblas
   - libboost=1.73.0=h28710b8_12
@@ -88,9 +110,10 @@ dependencies:
   - libcusparse-dev=11.7.2.124=hbbe9722_0
   - libdeflate=1.17=h0b41bf4_0
   - libffi=3.4.4=h6a678d5_0
+  - libgcc-devel_linux-64=10.3.0=he6cfe16_16
   - libgcc-ng=12.2.0=h65d4601_19
-  - libgfortran-ng=11.2.0=h00389a5_1
-  - libgfortran5=11.2.0=h1234567_1
+  - libgfortran-ng=12.2.0=h69a702a_19
+  - libgfortran5=12.2.0=h337968e_19
   - libgomp=12.2.0=h65d4601_19
   - libiconv=1.17=h166bdaf_0
   - liblapack=3.9.0=16_linux64_openblas
@@ -102,7 +125,10 @@ dependencies:
   - libopenblas=0.3.21=h043d6bf_0
   - libpng=1.6.39=h753d276_0
   - libprotobuf=3.21.12=h3eb15da_0
+  - libsanitizer=10.3.0=h26c7422_16
+  - libsodium=1.0.18=h36c2ea0_1
   - libsqlite=3.42.0=h2797004_0
+  - libstdcxx-devel_linux-64=10.3.0=he6cfe16_16
   - libstdcxx-ng=12.2.0=h46fd767_19
   - libtiff=4.5.0=h6adf6a1_2
   - libuuid=2.38.1=h0b41bf4_0
@@ -112,10 +138,13 @@ dependencies:
   - llvm-openmp=16.0.4=h4dfa4b3_0
   - lz4-c=1.9.4=h6a678d5_0
   - magma=2.6.2=hc72dce7_0
+  - matplotlib-inline=0.1.6=pyhd8ed1ab_0
   - mkl=2022.2.1=h84fe81f_16997
+  - mpi=1.0=openmpi
   - msms=2.6.1=h516909a_0
   - nccl=2.15.5.1=h0800d71_0
   - ncurses=6.4=h6a678d5_0
+  - nest-asyncio=1.5.6=pyhd8ed1ab_0
   - nettle=3.6=he412f7d_0
   - networkx=3.1=pyhd8ed1ab_0
   - ninja=1.11.1=h924138e_0
@@ -125,16 +154,23 @@ dependencies:
   - numpy-base=1.24.3=py38h1e6e340_0
   - openh264=2.1.1=h780b84a_0
   - openjpeg=2.5.0=hfec8fc6_2
-  - openssl=3.1.0=hd590300_3
+  - openmpi=4.1.5=h414af15_101
+  - openssl=3.1.1=hd590300_1
   - packaging=23.0=py38h06a4308_0
   - pandas=1.5.3=py38h417a72b_0
+  - parso=0.8.3=pyhd8ed1ab_0
   - perl=5.32.1=0_h5eee18b_perl5
+  - pexpect=4.8.0=pyh1a96a4e_2
+  - pickleshare=0.7.5=py_1003
   - pillow=9.4.0=py38hde6dc18_1
-  - pip=23.0.1=py38h06a4308_0
   - pooch=1.4.0=pyhd3eb1b0_0
+  - prompt-toolkit=3.0.38=pyha770c72_0
   - psutil=5.9.5=py38h1de0b5d_0
   - pthread-stubs=0.4=h36c2ea0_1001
+  - ptyprocess=0.7.0=pyhd3deb0d_0
+  - pure_eval=0.2.2=pyhd8ed1ab_0
   - pycparser=2.21=pyhd3eb1b0_0
+  - pygments=2.15.1=pyhd8ed1ab_0
   - pyopenssl=23.1.1=pyhd8ed1ab_0
   - pysocks=1.7.1=py38h06a4308_0
   - python=3.8.16=he550d4f_1_cpython
@@ -144,6 +180,7 @@ dependencies:
   - pytorch-cuda=11.6=h867d48c_1
   - pytorch-mutex=1.0=cuda
   - pytz=2022.7=py38h06a4308_0
+  - pyzmq=25.0.2=py38he24dcef_0
   - readline=8.2=h5eee18b_0
   - requests=2.29.0=py38h06a4308_0
   - scikit-learn=1.2.2=py38h6a678d5_0
@@ -151,37 +188,78 @@ dependencies:
   - six=1.16.0=pyhd3eb1b0_1
   - sleef=3.5.1=h9b69904_2
   - sqlite=3.41.2=h5eee18b_0
+  - stack_data=0.6.2=pyhd8ed1ab_0
+  - sysroot_linux-64=2.12=he073ed8_15
   - tbb=2021.7.0=h924138e_0
   - threadpoolctl=2.2.0=pyh0d69192_0
   - tk=8.6.12=h1ccaba5_0
   - torchaudio=0.13.1=py38_cu116
   - torchvision=0.14.1=py38_cu116
+  - tornado=6.3.2=py38h01eb140_0
+  - traitlets=5.9.0=pyhd8ed1ab_0
   - typing_extensions=4.6.0=pyha770c72_0
   - urllib3=1.26.15=py38h06a4308_0
+  - wcwidth=0.2.6=pyhd8ed1ab_0
   - wheel=0.38.4=py38h06a4308_0
   - xorg-libxau=1.0.11=hd590300_0
   - xorg-libxdmcp=1.1.3=h7f98852_0
   - xz=5.4.2=h5eee18b_0
+  - zeromq=4.3.4=h9c3ff4c_1
+  - zipp=3.15.0=pyhd8ed1ab_0
   - zlib=1.2.13=h166bdaf_4
   - zstd=1.5.5=hc292b87_0
   - pip:
+      - absl-py==1.4.0
+      - aiohttp==3.8.4
+      - aiosignal==1.3.1
       - alabaster==0.7.13
-      - atom3-py3==0.1.9.9
+      - async-timeout==4.0.2
+      - git+https://github.com/amorehead/atom3.git@83987404ceed38a1f5a5abd517aa38128d0a4f2c
+      - attrs==23.1.0
       - babel==2.12.1
+      - cachetools==5.3.1
       - click==7.0
+      - configparser==5.3.0
       - dill==0.3.3
+      - docker-pycreds==0.4.0
       - docutils==0.17.1
       - easy-parallel-py3==0.1.6.4
+      - fairscale==0.4.0
+      - frozenlist==1.3.3
+      - fsspec==2023.5.0
+      - future==0.18.3
+      - gitdb==4.0.10
+      - gitpython==3.1.31
+      - google-auth==2.19.0
+      - google-auth-oauthlib==1.0.0
+      - grpcio==1.54.2
       - h5py==3.8.0
+      - hickle==5.0.2
       - imagesize==1.4.1
+      - install==1.3.5
       - jinja2==2.11.3
+      - markdown==3.4.3
       - markupsafe==1.1.1
+      - mpi4py==3.0.3
+      - multidict==6.0.4
       - multiprocess==0.70.11.1
+      - oauthlib==3.2.2
       - pathos==0.2.7
+      - pathtools==0.1.2
       - pox==0.3.2
       - ppft==1.7.6.6
-      - pygments==2.15.1
-      - setuptools==56.2.0
+      - promise==2.3
+      - protobuf==3.20.3
+      - pyasn1==0.5.0
+      - pyasn1-modules==0.3.0
+      - pydeprecate==0.3.1
+      - pytorch-lightning==1.4.8
+      - pyyaml==6.0
+      - requests-oauthlib==1.3.1
+      - rsa==4.9
+      - sentry-sdk==1.24.0
+      - shortuuid==1.0.11
+      - smmap==5.0.0
       - snowballstemmer==2.2.0
       - sphinx==4.0.1
       - sphinxcontrib-applehelp==1.0.4
@@ -190,4 +268,12 @@ dependencies:
       - sphinxcontrib-jsmath==1.0.1
       - sphinxcontrib-qthelp==1.0.3
       - sphinxcontrib-serializinghtml==1.1.5
-      - tqdm==4.49.0
+      - subprocess32==3.5.4
+      - tensorboard==2.13.0
+      - tensorboard-data-server==0.7.0
+      - termcolor==2.3.0
+      - torchmetrics==0.5.1
+      - wandb==0.12.2
+      - werkzeug==2.3.4
+      - yarl==1.9.2
+      - yaspin==2.3.0

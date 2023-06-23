@@ -1,19 +1,25 @@
 import collections as col
+import copy
+import dill
 import gzip
+import h5py
 import logging
 import os
 import re
 import shutil
+import subprocess
+import tempfile
 import urllib.request as request
 from contextlib import closing
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
 
 import atom3.database as db
 import atom3.neighbors as nb
 import atom3.pair as pa
 import dgl
 import dill as pickle
+import hickle as hkl
 import numpy as np
 import pandas as pd
 import torch
@@ -639,7 +645,10 @@ def postprocess_pruned_pair(raw_pdb_filenames: List[str], external_feats_dir: st
 
             # Get protrusion indices using PSAIA
             psaia_filepath = os.path.relpath(os.path.splitext(os.path.split(raw_pdb_filename)[-1])[0])
-            psaia_filename = [path for path in Path(external_feats_dir).rglob(f'{psaia_filepath}*.tbl')][0]  # 1st path
+            psaia_filenames = [path for path in Path(external_feats_dir).rglob(f'{psaia_filepath}*.tbl')]
+            if len(psaia_filenames) == 0:
+                psaia_filenames = [path for path in Path(external_feats_dir).parent.rglob(f'{psaia_filepath}*.tbl')]
+            psaia_filename = psaia_filenames[0]
             psaia_df = get_df_from_psaia_tbl_file(psaia_filename)
 
             # Extract half-sphere exposure (HSE) statistics for each PDB model (including HSAAC and CN values)
@@ -1250,6 +1259,70 @@ def log_dataset_statistics(logger, dataset_statistics: dict):
                 f' valid amide normal vectors found for df0 structures in total')
     logger.info(f'{dataset_statistics["num_of_valid_df1_amide_normal_vecs"]}'
                 f' valid amide normal vectors found for df1 structures in total')
+
+
+def convert_pair_pickle_to_hdf5(pickle_filepath: Path, hdf5_filepath: Path):
+    # Load pickle file
+    with open(str(pickle_filepath), 'rb') as f:
+        pair_data = dill.load(f)
+
+    # Save data to HDF5 file
+    hkl_data = list(pair_data)
+    hkl.dump(hkl_data, str(hdf5_filepath))
+
+
+def convert_pair_hdf5_to_pickle(hdf5_filepath: Path) -> pa.Pair:
+    # Load HDF5 file as pickle object
+    hkl_data = hkl.load(str(hdf5_filepath))
+    pair_data = pa.Pair(*hkl_data)
+    return pair_data
+
+
+def convert_pair_hdf5_to_hdf5_file(hdf5_filepath: Path) -> h5py.File:
+    # Load HDF5 file as HDF5 file
+    data = h5py.File(str(hdf5_filepath), 'r')
+    return data
+
+
+def annotate_idr_residues(pickle_filepaths: List[Path]):
+    # Process each pickle file input
+    for pickle_filepath in pickle_filepaths:
+        # Load pickle file
+        with open(str(pickle_filepath), 'rb') as f:
+            pair_data = dill.load(f)
+        # Find IDR interface residues
+        annotating_new_residues = False
+        annotated_residue_sequences = copy.deepcopy(pair_data.sequences)
+        for key, sequence in pair_data.sequences.items():
+            if "idr_annotations" not in key and f"{key}_idr_annotations" not in pair_data.sequences:
+                annotating_new_residues = True
+                fasta_filepath = os.path.join(tempfile.mkdtemp(), f'{key}.fasta')
+                with open(fasta_filepath, 'w') as file:
+                    file.write(f'>sequence\n{sequence}\n')
+                # Run `flDPnn` to predict which residues reside in an IDR
+                output_filepath = os.path.join(tempfile.mkdtemp(), "fldpnn_results.csv")
+                cmd = [
+                    'docker', 'run', '-i', 'sinaghadermarzi/fldpnn',
+                    'fldpnn/dockerinout_nofunc', '<', fasta_filepath, '>', output_filepath
+                ]
+                try:
+                    subprocess.run(' '.join(cmd), shell=True, check=True)
+                    print("Docker command executed successfully.")
+                except subprocess.CalledProcessError as e:
+                    print(f"Error executing Docker command: {e}")
+                # Parse output from `flDPnn`
+                output_df = pd.read_csv(output_filepath, skiprows=1)
+                annotated_residue_sequences[f"{key}_idr_annotations"] = output_df['Binary Prediction for Disorder'].tolist()
+                assert len(annotated_residue_sequences[f"{key}_idr_annotations"]) == len(pair_data.sequences[key]), "IDR annotations must match length of input sequence."
+        # Record IDR residue annotations within pickle file
+        if annotating_new_residues:
+            pair_data.sequences.update({
+                key: value
+                for key, value in annotated_residue_sequences.items()
+                if key not in pair_data.sequences
+            })
+            with open(str(pickle_filepath), 'wb') as f:
+                dill.dump(pair_data, f)
 
 
 def process_raw_file_into_dgl_graphs(raw_filepath: str, new_graph_dir: str, processed_filepath: str,

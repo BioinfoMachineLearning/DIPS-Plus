@@ -72,7 +72,7 @@ NUM_ALLOWABLE_NANS = 5
 
 # Features to be one-hot encoded during graph processing and what their values could be
 FEAT_COLS = [
-    # 'resname',  # By default, leave out one-hot encoding of residues' type to decrease feature redundancy
+    'resname',  # By default, leave out one-hot encoding of residues' type to decrease feature redundancy
     'ss_value',
     'rsa_value',
     'rd_value'
@@ -88,8 +88,8 @@ FEAT_COLS.extend(
 
 ALLOWABLE_FEATS = [
     # By default, leave out one-hot encoding of residues' type to decrease feature redundancy
-    # ["TRP", "PHE", "LYS", "PRO", "ASP", "ALA", "ARG", "CYS", "VAL", "THR",
-    #  "GLY", "SER", "HIS", "LEU", "GLU", "TYR", "ILE", "ASN", "MET", "GLN"],
+    ["TRP", "PHE", "LYS", "PRO", "ASP", "ALA", "ARG", "CYS", "VAL", "THR",
+     "GLY", "SER", "HIS", "LEU", "GLU", "TYR", "ILE", "ASN", "MET", "GLN"],
     ['H', 'B', 'E', 'G', 'I', 'T', 'S', '-'],  # Populated 1D list means restrict column feature values by list values
     [],  # Empty list means take scalar value as is
     [],

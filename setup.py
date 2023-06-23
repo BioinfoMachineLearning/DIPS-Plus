@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='DIPS-Plus',
-    version='1.1.0',
+    version='1.2.0',
     description='The Enhanced Database of Interacting Protein Structures for Interface Prediction',
     author='Alex Morehead',
     author_email='acmwhb@umsystem.edu',
@@ -15,9 +15,7 @@ setup(
         'tqdm==4.49.0',
         'Sphinx==4.0.1',
         'easy-parallel-py3==0.1.6.4',
-        'atom3-py3==0.1.9.9',
         'click==7.0.0',
-        # mpi4py==3.0.3  # On Andes, do 'source venv/bin/activate', 'module load gcc/10.3.0', and 'pip install mpi4py --no-cache-dir --no-binary :all:'
     ],
     packages=find_packages(),
 )

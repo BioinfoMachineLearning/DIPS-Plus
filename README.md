@@ -4,7 +4,7 @@
 
 The Enhanced Database of Interacting Protein Structures for Interface Prediction
 
-[![Paper](http://img.shields.io/badge/paper-arxiv.2106.04362-B31B1B.svg)](https://arxiv.org/abs/2106.04362)  [![CC BY 4.0][cc-by-shield]][cc-by] [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5134732.svg)](https://doi.org/10.5281/zenodo.5134732)
+[![Paper](http://img.shields.io/badge/paper-arxiv.2106.04362-B31B1B.svg)](https://arxiv.org/abs/2106.04362)  [![CC BY 4.0][cc-by-shield]][cc-by] [![Primary Data DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5134732.svg)](https://doi.org/10.5281/zenodo.5134732) [![Supplementary Data DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8071136.svg)](https://doi.org/10.5281/zenodo.8071136)
 
 [cc-by]: http://creativecommons.org/licenses/by/4.0/
 [cc-by-image]: https://i.creativecommons.org/l/by/4.0/88x31.png
@@ -25,8 +25,9 @@ The Enhanced Database of Interacting Protein Structures for Interface Prediction
   * DB5-Plus' final 'raw' tar archive now also includes a corrected (i.e. de-duplicated) list of filenames for its 55 test complexes
     * Benchmark results included in our paper were run after this issue was resolved
     * However, if you ran experiments using DB5-Plus' filename list for its test complexes, please re-run them using the latest list
+* Version 1.2.0: Minor additions to DIPS-Plus tar archives, including new residue-level intrinsic disorder region annotations and raw Jackhmmer-small BFD MSAs (Supplementary Data DOI: 10.5281/zenodo.8071136)
 
-## How to run creation tools
+## How to set up
 
 First, download Mamba (if not already downloaded):
 ```bash
@@ -51,66 +52,135 @@ conda activate DIPS-Plus  # Note: One still needs to use `conda` to (de)activate
 pip3 install -e .
 ```
 
-## Default DIPS-Plus directory structure
+To install PSAIA for feature generation, install GCC 10 for PSAIA:
+
+```bash
+# Install GCC 10 for Ubuntu 20.04:
+sudo apt install software-properties-common
+sudo add-apt-repository ppa:ubuntu-toolchain-r/ppa
+sudo apt update
+sudo apt install gcc-10 g++-10
+
+# Or install GCC 10 for Arch Linux/Manjaro:
+yay -S gcc10
+```
+
+Then install QT4 for PSAIA:
+
+```bash
+# Install QT4 for Ubuntu 20.04:
+sudo add-apt-repository ppa:rock-core/qt4
+sudo apt update
+sudo apt install libqt4* libqtcore4 libqtgui4 libqtwebkit4 qt4* libxext-dev
+
+# Or install QT4 for Arch Linux/Manjaro:
+yay -S qt4
+```
+
+Conclude by compiling PSAIA from source:
+
+```bash
+# Select the location to install the software:
+MY_LOCAL=~/Programs
+
+# Download and extract PSAIA's source code:
+mkdir "$MY_LOCAL"
+cd "$MY_LOCAL"
+wget http://complex.zesoi.fer.hr/data/PSAIA-1.0-source.tar.gz
+tar -xvzf PSAIA-1.0-source.tar.gz
+
+# Compile PSAIA (i.e., a GUI for PSA):
+cd PSAIA_1.0_source/make/linux/psaia/
+qmake-qt4 psaia.pro
+make
+
+# Compile PSA (i.e., the protein structure analysis (PSA) program):
+cd ../psa/
+qmake-qt4 psa.pro
+make
+
+# Compile PIA (i.e., the protein interaction analysis (PIA) program):
+cd ../pia/
+qmake-qt4 pia.pro
+make
+
+# Test run any of the above-compiled programs:
+cd "$MY_LOCAL"/PSAIA_1.0_source/bin/linux
+# Test run PSA inside a GUI:
+./psaia/psaia
+# Test run PIA through a terminal:
+./pia/pia
+# Test run PSA through a terminal:
+./psa/psa
+```
+
+Lastly, install Docker following the instructions from https://docs.docker.com/engine/install/
+
+## How to generate protein feature inputs
+In our [feature generation notebook](notebooks/feature_generation.ipynb), we provide examples of how users can generate the protein features described in our [accompanying manuscript](https://arxiv.org/abs/2106.04362) for individual protein inputs.
+
+## How to use data
+In our [data usage notebook](notebooks/data_usage.ipynb), we provide examples of how users might use DIPS-Plus (or DB5-Plus) for downstream analysis or prediction tasks. For example, to train a new NeiA model with DB5-Plus as its cross-validation dataset, first download DB5-Plus' raw files and process them via the `data_usage` notebook:
+
+```bash
+mkdir -p project/datasets/DB5/final
+wget https://zenodo.org/record/5134732/files/final_raw_db5.tar.gz -O project/datasets/DB5/final/final_raw_db5.tar.gz
+tar -xzf project/datasets/DB5/final/final_raw_db5.tar.gz -C project/datasets/DB5/final/
+
+# To process these raw files for training and subsequently train a model:
+python3 notebooks/data_usage.py
+```
+
+## Standard DIPS-Plus directory structure
 
 ```
 DIPS-Plus
 │
 └───project
-│    │
-│    └───datasets
-│    │   │
-│    │   └───builder
-│    │   │
-│    │   └───DB5
-│    │   │   │
-│    │   │   └───final
-│    │   │   │   │
-│    │   │   │   └───raw
-│    │   │   │
-│    │   │   └───interim
-│    │   │   │   │
-│    │   │   │   └───complexes
-│    │   │   │   │
-│    │   │   │   └───external_feats
-│    │   │   │   │
-│    │   │   │   └───pairs
-│    │   │   │
-│    │   │   └───raw
-│    │   │   │
-│    │   │   README
-│    │   │
-│    │   └───DIPS
-│    │       │
-│    │       └───filters
-│    │       │
-│    │       └───final
-│    │       │   │
-│    │       │   └───raw
-│    │       │
-│    │       └───interim
-│    │       │   │
-│    │       │   └───complexes
-│    │       │   │
-│    │       │   └───external_feats
-│    │       │   │
-│    │       │   └───pairs-pruned
-│    │       │
-│    │       └───raw
-│    │           │
-│    │           └───pdb
-│    │
-│    └───utils
-│        constants.py
-│        utils.py
-│
-.gitignore
-environment.yml
-LICENSE
-README.md
-requirements.txt
-setup.cfg
-setup.py
+     │
+     └───datasets
+         │
+         └───DB5
+         │   │
+         │   └───final
+         │   │   │
+         │   │   └───processed  # task-ready features for each dataset example
+         │   │   │
+         │   │   └───raw  # generic features for each dataset example
+         │   │
+         │   └───interim
+         │   │   │
+         │   │   └───complexes  # metadata for each dataset example
+         │   │   │
+         │   │   └───external_feats  # features curated for each dataset example using external tools
+         │   │   │
+         │   │   └───pairs  # pair-wise features for each dataset example
+         │   │
+         │   └───raw  # raw PDB data downloads for each dataset example
+         │
+         └───DIPS
+             │
+             └───filters  # filters to apply to each (un-pruned) dataset example
+             │
+             └───final
+             │   │
+             │   └───processed  # task-ready features for each dataset example
+             │   │
+             │   └───raw  # generic features for each dataset example
+             │
+             └───interim
+             │   │
+             │   └───complexes  # metadata for each dataset example
+             │   │
+             │   └───external_feats  # features curated for each dataset example using external tools
+             │   │
+             │   └───pairs-pruned  # filtered pair-wise features for each dataset example
+             │   │
+             │   └───parsed  # pair-wise features for each dataset example after initial parsing
+             │
+             └───raw
+                 │
+                 └───pdb  # raw PDB data downloads for each dataset example
 ```
 
 ## How to compile DIPS-Plus from scratch
@@ -122,7 +192,7 @@ Retrieve protein complexes from the RCSB PDB and build out directory structure:
 rm project/datasets/DIPS/final/raw/pairs-postprocessed.txt project/datasets/DIPS/final/raw/pairs-postprocessed-train.txt project/datasets/DIPS/final/raw/pairs-postprocessed-val.txt project/datasets/DIPS/final/raw/pairs-postprocessed-test.txt
 
 # Create data directories (if not already created):
-mkdir project/datasets/DIPS/raw project/datasets/DIPS/raw/pdb project/datasets/DIPS/interim project/datasets/DIPS/interim/external_feats project/datasets/DIPS/final project/datasets/DIPS/final/raw project/datasets/DIPS/final/processed
+mkdir project/datasets/DIPS/raw project/datasets/DIPS/raw/pdb project/datasets/DIPS/interim project/datasets/DIPS/interim/pairs-pruned project/datasets/DIPS/interim/external_feats project/datasets/DIPS/final project/datasets/DIPS/final/raw project/datasets/DIPS/final/processed
 
 # Download the raw PDB files:
 rsync -rlpt -v -z --delete --port=33444 --include='*.gz' --include='*.xz' --include='*/' --exclude '*' \
@@ -139,7 +209,17 @@ python3 project/datasets/builder/prune_pairs.py project/datasets/DIPS/interim/pa
 
 # Generate externally-sourced features:
 python3 project/datasets/builder/generate_psaia_features.py "$PSAIADIR" "$PROJDIR"/project/datasets/builder/psaia_config_file_dips.txt "$PROJDIR"/project/datasets/DIPS/raw/pdb "$PROJDIR"/project/datasets/DIPS/interim/parsed "$PROJDIR"/project/datasets/DIPS/interim/pairs-pruned "$PROJDIR"/project/datasets/DIPS/interim/external_feats --source_type rcsb
-python3 project/datasets/builder/generate_hhsuite_features.py "$PROJDIR"/project/datasets/DIPS/interim/parsed "$PROJDIR"/project/datasets/DIPS/interim/pairs-pruned "$HHSUITE_DB" "$PROJDIR"/project/datasets/DIPS/interim/external_feats --num_cpu_jobs 4 --num_cpus_per_job 8 --num_iter 2 --source_type rcsb --write_file
+python3 project/datasets/builder/generate_hhsuite_features.py "$PROJDIR"/project/datasets/DIPS/interim/parsed "$PROJDIR"/project/datasets/DIPS/interim/pairs-pruned "$HHSUITE_DB" "$PROJDIR"/project/datasets/DIPS/interim/external_feats --num_cpu_jobs 4 --num_cpus_per_job 8 --num_iter 2 --source_type rcsb --write_file  # Note: After this, one needs to re-run this command with `--read_file` instead
+
+# Generate multiple sequence alignments (MSAs) using a smaller sequence database (if not already created using the standard BFD):
+DOWNLOAD_DIR="$HHSUITE_DB_DIR" && ROOT_DIR="${DOWNLOAD_DIR}/small_bfd" && SOURCE_URL="https://storage.googleapis.com/alphafold-databases/reduced_dbs/bfd-first_non_consensus_sequences.fasta.gz" && BASENAME=$(basename "${SOURCE_URL}") && mkdir --parents "${ROOT_DIR}" && aria2c "${SOURCE_URL}" --dir="${ROOT_DIR}" && pushd "${ROOT_DIR}" && gunzip "${ROOT_DIR}/${BASENAME}" && popd  # e.g., Download the small BFD
+python3 project/datasets/builder/generate_hhsuite_features.py "$PROJDIR"/project/datasets/DIPS/interim/parsed "$PROJDIR"/project/datasets/DIPS/interim/pairs-pruned "$HHSUITE_DB_DIR"/small_bfd "$PROJDIR"/project/datasets/DIPS/interim/external_feats --num_cpu_jobs 4 --num_cpus_per_job 8 --num_iter 2 --source_type rcsb --generate_msa_only --write_file  # Note: After this, one needs to re-run this command with `--read_file` instead
+
+# Identify interfaces within intrinsically disordered regions (IDRs) #
+# (1) Pull down the Docker image for `flDPnn`
+docker pull docker.io/sinaghadermarzi/fldpnn
+# (2) For all sequences in the dataset, predict which interface residues reside within IDRs
+python3 project/datasets/builder/annotate_idr_interfaces.py "$PROJDIR"/project/datasets/DIPS/final/raw
 
 # Add new features to the filtered pairs, ensuring that the pruned pairs' original PDB files are stored locally for DSSP:
 python3 project/datasets/builder/download_missing_pruned_pair_pdbs.py "$PROJDIR"/project/datasets/DIPS/raw/pdb "$PROJDIR"/project/datasets/DIPS/interim/pairs-pruned --num_cpus 32 --rank "$1" --size "$2"
@@ -198,7 +278,7 @@ python3 project/datasets/builder/convert_complexes_to_graphs.py "$PROJDIR"/proje
 
 We split the (tar.gz) archive into eight separate parts with
 'split -b 4096M interim_external_feats_dips.tar.gz "interim_external_feats_dips.tar.gz.part"'
-to upload it to Zenodo, so to recover the original archive:
+to upload it to the dataset's primary Zenodo record, so to recover the original archive:
 
 ```bash
 # Reassemble external features archive with 'cat'

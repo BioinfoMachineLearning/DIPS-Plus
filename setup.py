@@ -10,7 +10,7 @@ setup(
     author_email='acmwhb@umsystem.edu',
     url='https://github.com/BioinfoMachineLearning/DIPS-Plus',
     install_requires=[
-        'setuptools==56.2.0',
+        'setuptools==65.5.1',
         'dill==0.3.3',
         'tqdm==4.49.0',
         'Sphinx==4.0.1',

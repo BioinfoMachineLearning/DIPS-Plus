@@ -4,7 +4,7 @@
 
 The Enhanced Database of Interacting Protein Structures for Interface Prediction
 
-[![Paper](http://img.shields.io/badge/paper-arxiv.2106.04362-B31B1B.svg)](https://arxiv.org/abs/2106.04362)  [![CC BY 4.0][cc-by-shield]][cc-by] [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5134732.svg)](https://doi.org/10.5281/zenodo.5134732)
+[![Paper](http://img.shields.io/badge/paper-arxiv.2106.04362-B31B1B.svg)](https://arxiv.org/abs/2106.04362)  [![CC BY 4.0][cc-by-shield]][cc-by] [![Primary Data DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5134732.svg)](https://doi.org/10.5281/zenodo.5134732) [![Supplementary Data DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8071136.svg)](https://doi.org/10.5281/zenodo.8071136)
 
 [cc-by]: http://creativecommons.org/licenses/by/4.0/
 [cc-by-image]: https://i.creativecommons.org/l/by/4.0/88x31.png
@@ -25,6 +25,7 @@ The Enhanced Database of Interacting Protein Structures for Interface Prediction
   * DB5-Plus' final 'raw' tar archive now also includes a corrected (i.e. de-duplicated) list of filenames for its 55 test complexes
     * Benchmark results included in our paper were run after this issue was resolved
     * However, if you ran experiments using DB5-Plus' filename list for its test complexes, please re-run them using the latest list
+* Version 1.2.0: Minor additions to DIPS-Plus tar archives, including new residue-level intrinsic disorder region annotations and raw Jackhmmer-small BFD MSAs (Supplementary Data DOI: 10.5281/zenodo.8071136)
 
 ## How to set up
 
@@ -277,7 +278,7 @@ python3 project/datasets/builder/convert_complexes_to_graphs.py "$PROJDIR"/proje
 
 We split the (tar.gz) archive into eight separate parts with
 'split -b 4096M interim_external_feats_dips.tar.gz "interim_external_feats_dips.tar.gz.part"'
-to upload it to Zenodo, so to recover the original archive:
+to upload it to the dataset's primary Zenodo record, so to recover the original archive:
 
 ```bash
 # Reassemble external features archive with 'cat'

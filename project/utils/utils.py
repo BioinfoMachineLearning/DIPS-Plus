@@ -1294,7 +1294,12 @@ def annotate_idr_residues(pickle_filepaths: List[Path]):
         annotating_new_residues = False
         annotated_residue_sequences = copy.deepcopy(pair_data.sequences)
         for key, sequence in pair_data.sequences.items():
-            if "idr_annotations" not in key and f"{key}_idr_annotations" not in pair_data.sequences:
+            key_to_be_annotated = key in ["l_b", "r_b", "l_u", "r_u"]
+            idrs_to_be_annotated = (
+                (f"{key}_idr_annotations" not in pair_data.sequences) or
+                (f"{key}_idr_propensities" not in pair_data.sequences)
+            )
+            if key_to_be_annotated and idrs_to_be_annotated:
                 annotating_new_residues = True
                 fasta_filepath = os.path.join(tempfile.mkdtemp(), f'{key}.fasta')
                 with open(fasta_filepath, 'w') as file:
@@ -1313,13 +1318,14 @@ def annotate_idr_residues(pickle_filepaths: List[Path]):
                 # Parse output from `flDPnn`
                 output_df = pd.read_csv(output_filepath, skiprows=1)
                 annotated_residue_sequences[f"{key}_idr_annotations"] = output_df['Binary Prediction for Disorder'].tolist()
+                annotated_residue_sequences[f"{key}_idr_propensities"] = output_df['Predicted Score for Disorder'].tolist()
                 assert len(annotated_residue_sequences[f"{key}_idr_annotations"]) == len(pair_data.sequences[key]), "IDR annotations must match length of input sequence."
-        # Record IDR residue annotations within pickle file
+                assert len(annotated_residue_sequences[f"{key}_idr_propensities"]) == len(pair_data.sequences[key]), "IDR propensities must match length of input sequence."
+        # Record IDR residue annotations and propensities within pickle file
         if annotating_new_residues:
             pair_data.sequences.update({
                 key: value
                 for key, value in annotated_residue_sequences.items()
-                if key not in pair_data.sequences
             })
             with open(str(pickle_filepath), 'wb') as f:
                 dill.dump(pair_data, f)

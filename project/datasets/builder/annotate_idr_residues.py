@@ -32,6 +32,9 @@ def main(raw_data_dir: str, num_cpus: int):
         raw_data_pickle_filepaths[i:i+chunk_size]
         for i in range(0, len(raw_data_pickle_filepaths), chunk_size)
     ]
+    assert (
+        len(raw_data_pickle_filepaths) == len([fp for chunk in file_path_chunks for fp in chunk])
+    ), "Number of input files must match number of files across all file chunks."
     
     # Create a pool of worker processes
     pool = multiprocessing.Pool(processes=num_processes)

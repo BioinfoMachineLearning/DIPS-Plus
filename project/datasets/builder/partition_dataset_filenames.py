@@ -265,7 +265,7 @@ def partition_filenames_by_structure(
         assert os.path.exists(pairs_postprocessed_train_txt), "DB5-Plus train filenames must be curated in advance to partition training and validation filenames."
         with open(pairs_postprocessed_train_txt, "r") as f:
             train_filenames = [line.strip() for line in f.readlines()]
-        for train_filename in train_filenames[:100]:  # TODO: revert after debugging
+        for train_filename in train_filenames:
             postprocessed_train_pair: pa.Pair = pd.read_pickle(os.path.join(output_dir, train_filename))
             pdb_code = postprocessed_train_pair.df0.pdb_name[0].split("_")[0][1:3]
             pdb_dir = os.path.join(Path(output_dir).parent.parent, "raw", "pdb", pdb_code)
@@ -295,7 +295,7 @@ def partition_filenames_by_structure(
         assert os.path.exists(pairs_postprocessed_val_txt), "DB5-Plus validation filenames must be curated in advance to partition training and validation filenames."
         with open(pairs_postprocessed_val_txt, "r") as f:
             val_filenames = [line.strip() for line in f.readlines()]
-        for val_filename in val_filenames[:100]:  # TODO: revert after debugging
+        for val_filename in val_filenames[:100]:
             postprocessed_val_pair: pa.Pair = pd.read_pickle(os.path.join(output_dir, val_filename))
             pdb_code = postprocessed_val_pair.df0.pdb_name[0].split("_")[0][1:3]
             pdb_dir = os.path.join(Path(output_dir).parent.parent, "raw", "pdb", pdb_code)

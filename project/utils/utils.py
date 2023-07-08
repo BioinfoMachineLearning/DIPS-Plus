@@ -187,7 +187,7 @@ def prot_df_to_dgl_graph_feats(df: pd.DataFrame, feat_cols: List, allowable_feat
     """
     # Exit early if feat_cols or allowable_feats do not align in dimensionality
     if len(feat_cols) != len(allowable_feats):
-        print('feat_cols does not match the length of allowable_feats')
+        logging.error('feat_cols does not match the length of allowable_feats')
         exit(1)
 
     # Structure-based node feature aggregation
@@ -1288,8 +1288,14 @@ def annotate_idr_residues(pickle_filepaths: List[Path]):
     # Process each pickle file input
     for pickle_filepath in pickle_filepaths:
         # Load pickle file
-        with open(str(pickle_filepath), 'rb') as f:
-            pair_data = dill.load(f)
+        try:
+            with open(str(pickle_filepath), 'rb') as f:
+                pair_data = dill.load(f)
+        except Exception as e:
+            logging.error(f"Failed to load pickle file {pickle_filepath} due to: {e}")
+            with open("idr_annotation_errors.txt", "a") as f:
+                f.write(str(pickle_filepath) + "\n")
+            continue
         # Find IDR interface residues
         annotating_new_residues = False
         annotated_residue_sequences = copy.deepcopy(pair_data.sequences)
@@ -1312,9 +1318,9 @@ def annotate_idr_residues(pickle_filepaths: List[Path]):
                 ]
                 try:
                     subprocess.run(' '.join(cmd), shell=True, check=True)
-                    print("Docker command executed successfully.")
+                    logging.info("Docker command executed successfully.")
                 except subprocess.CalledProcessError as e:
-                    print(f"Error executing Docker command: {e}")
+                    logging.info(f"Error executing Docker command: {e}")
                 # Parse output from `flDPnn`
                 output_df = pd.read_csv(output_filepath, skiprows=1)
                 annotated_residue_sequences[f"{key}_idr_annotations"] = output_df['Binary Prediction for Disorder'].tolist()

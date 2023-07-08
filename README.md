@@ -219,7 +219,7 @@ python3 project/datasets/builder/generate_hhsuite_features.py "$PROJDIR"/project
 # (1) Pull down the Docker image for `flDPnn`
 docker pull docker.io/sinaghadermarzi/fldpnn
 # (2) For all sequences in the dataset, predict which interface residues reside within IDRs
-python3 project/datasets/builder/annotate_idr_interfaces.py "$PROJDIR"/project/datasets/DIPS/final/raw
+python3 project/datasets/builder/annotate_idr_interfaces.py "$PROJDIR"/project/datasets/DIPS/final/raw --num_cpus 16
 
 # Add new features to the filtered pairs, ensuring that the pruned pairs' original PDB files are stored locally for DSSP:
 python3 project/datasets/builder/download_missing_pruned_pair_pdbs.py "$PROJDIR"/project/datasets/DIPS/raw/pdb "$PROJDIR"/project/datasets/DIPS/interim/pairs-pruned --num_cpus 32 --rank "$1" --size "$2"

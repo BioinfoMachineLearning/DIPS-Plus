@@ -14,7 +14,7 @@ from atom3 import database as db
 from tqdm import tqdm
 
 from project.utils.constants import DB5_TEST_PDB_CODES, ATOM_COUNT_LIMIT
-from project.utils.utils import get_global_node_rank
+from project.utils.utils import download_pdb_file, get_global_node_rank
 
 
 FOLDSEEK_DEFAULT_TAB_COLUMNS = [
@@ -288,6 +288,10 @@ def partition_filenames_by_structure(
                 gunzip_file(l_b_pdb_filepath)
             if not os.path.exists(r_b_pdb_filepath) and os.path.exists(r_b_pdb_filepath + ".gz"):
                 gunzip_file(r_b_pdb_filepath)
+            if not os.path.exists(l_b_pdb_filepath):
+                download_pdb_file(os.path.basename(l_b_pdb_filepath), l_b_pdb_filepath)
+            if not os.path.exists(r_b_pdb_filepath):
+                download_pdb_file(os.path.basename(r_b_pdb_filepath), r_b_pdb_filepath)
             assert os.path.exists(l_b_pdb_filepath) and os.path.exists(r_b_pdb_filepath), "Both left and right-bound PDB files collected must exist."
 
         # Collect (and, if necessary, extract) all validation PDB files
@@ -318,6 +322,10 @@ def partition_filenames_by_structure(
                 gunzip_file(l_b_pdb_filepath)
             if not os.path.exists(r_b_pdb_filepath) and os.path.exists(r_b_pdb_filepath + ".gz"):
                 gunzip_file(r_b_pdb_filepath)
+            if not os.path.exists(l_b_pdb_filepath):
+                download_pdb_file(os.path.basename(l_b_pdb_filepath), l_b_pdb_filepath)
+            if not os.path.exists(r_b_pdb_filepath):
+                download_pdb_file(os.path.basename(r_b_pdb_filepath), r_b_pdb_filepath)
             assert os.path.exists(l_b_pdb_filepath) and os.path.exists(r_b_pdb_filepath), "Both left and right-bound PDB files collected must exist."
 
         # Collect all test PDB filepaths

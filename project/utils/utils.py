@@ -6,6 +6,7 @@ import h5py
 import logging
 import os
 import re
+import requests
 import shutil
 import subprocess
 import tempfile
@@ -1282,6 +1283,35 @@ def convert_pair_hdf5_to_hdf5_file(hdf5_filepath: Path) -> h5py.File:
     # Load HDF5 file as HDF5 file
     data = h5py.File(str(hdf5_filepath), 'r')
     return data
+
+
+def remove_digits_from_filename(filename):
+    pattern = r'\d+$'  # Matches one or more digits at the end of the string
+    result = re.sub(pattern, '', filename)
+    return result
+
+
+def download_pdb_file(pdb_filename, save_path, obsolete_pdb=False):
+    # Construct the URL for the specific PDB file
+    pdb_url = f"https://files.rcsb.org/download/{pdb_filename}"
+
+    # Send a GET request to the URL
+    response = requests.get(pdb_url)
+
+    # Check if the request was successful (HTTP status code 200)
+    download_succeeded = False
+    if response.status_code == 200:
+        # Save the response content (PDB file) to the specified location
+        download_succeeded = True
+        with open(save_path, "wb") as file:
+            file.write(response.content)
+        print(f"Download of PDB file {pdb_filename} completed successfully.")
+    else:
+        print(f"Failed to download PDB file {pdb_filename}. Status code: {response.status_code}")
+
+    if not download_succeeded and not obsolete_pdb:
+        # Try downloading the default (non-biological assembly) version of an obsolete PDB structure
+        download_pdb_file(remove_digits_from_filename(pdb_filename), save_path, obsolete_pdb=True)
 
 
 def annotate_idr_residues(pickle_filepaths: List[Path]):

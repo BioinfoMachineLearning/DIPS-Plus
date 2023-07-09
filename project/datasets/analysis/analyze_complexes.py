@@ -102,9 +102,13 @@ def main(output_dir: str, source_type: str):
                 r_b_pdb_code = Path(r_b_pdb_filepath).stem + "_" + r_b_df1_chains[0]
                 val_pdb_codes.extend([l_b_pdb_code, r_b_pdb_code])
 
+            # Record training and validation PDBs as a metadata CSV file
+            selected_pdbs_df = pdb_manager.df[pdb_manager.df.id.isin(train_pdb_codes + val_pdb_codes)]
+            selected_pdbs_df.to_csv("train_val_pdbs.csv")
+
             # Plot PDB resolution values versus experiment types
             # Note: the `experiment_type` of `other` indicates an example for which resolution metadata could not successfully be derived
-            selected_pdbs_df = pdb_manager.df[(pdb_manager.df.id.isin(train_pdb_codes + val_pdb_codes)) & ~(pdb_manager.df.experiment_type.isin(["other"]))]
+            selected_pdbs_df = selected_pdbs_df[~selected_pdbs_df.experiment_type.isin(["other"])]
             plt.figure(figsize=(10, 6))
             plt.scatter(selected_pdbs_df['resolution'], selected_pdbs_df['experiment_type'])
             plt.xlabel('Resolution')
@@ -112,10 +116,6 @@ def main(output_dir: str, source_type: str):
             plt.title('Resolution vs. Experiment Type')
             plt.show()
             plt.savefig("train_val_pdb_resolution_vs_experiment_type.png")
-
-            # Record which PDBs are of high resolution (i.e., <= 2.0 Angstrom in resolution)
-            high_res_pdbs_df = selected_pdbs_df[selected_pdbs_df.resolution <= 2.0]
-            high_res_pdbs_df.to_csv("high_res_train_val_pdbs.csv")
 
             logging.info("Finished analyzing all training and validation PDB filenames")
 

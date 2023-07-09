@@ -4,6 +4,7 @@ import os
 
 import atom3.pair as pa
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 
@@ -17,15 +18,12 @@ from project.utils.utils import download_pdb_file, gunzip_file
 @click.command()
 @click.argument('output_dir', default='../DIPS/final/raw', type=click.Path())
 @click.option('--source_type', default='rcsb', type=click.Choice(['rcsb', 'db5']))
-@click.option('--feature_types_to_correlate', default='rcsb', type=click.Choice(['rsa_value-rd_value']))
+@click.option('--feature_types_to_correlate', default='rcsb', type=click.Choice(['rsa_value-rd_value', 'rsa_value-cn_value', 'rd_value-cn_value']))
 def main(output_dir: str, source_type: str, feature_types_to_correlate: str):
     logger = logging.getLogger(__name__)
     logger.info("Analyzing feature correlation for each dataset example...")
 
-    if feature_types_to_correlate == "rsa_value-rd_value":
-        features_to_correlate = feature_types_to_correlate.split("-")
-    else:
-        raise NotImplementedError(f"Feature types {features_to_correlate} are currently not supported.")
+    features_to_correlate = feature_types_to_correlate.split("-")
     assert len(features_to_correlate) == 2, "Exactly two features may be currently compared for correlation measures."
 
     if source_type.lower() == "rcsb":
@@ -63,8 +61,8 @@ def main(output_dir: str, source_type: str, feature_types_to_correlate: str):
                 download_pdb_file(os.path.basename(r_b_pdb_filepath), r_b_pdb_filepath)
             assert os.path.exists(l_b_pdb_filepath) and os.path.exists(r_b_pdb_filepath), "Both left and right-bound PDB files collected must exist."
 
-            l_b_df0_feature_values = postprocessed_train_pair.df0[features_to_correlate].dropna()
-            r_b_df1_feature_values = postprocessed_train_pair.df1[features_to_correlate].dropna()
+            l_b_df0_feature_values = postprocessed_train_pair.df0[features_to_correlate].applymap(lambda x: np.nan if x == 'NA' else x).dropna().apply(pd.to_numeric)
+            r_b_df1_feature_values = postprocessed_train_pair.df1[features_to_correlate].applymap(lambda x: np.nan if x == 'NA' else x).dropna().apply(pd.to_numeric)
             train_feature_values.append(pd.concat([l_b_df0_feature_values, r_b_df1_feature_values]))
 
         # Collect (and, if necessary, extract) all validation PDB files
@@ -101,8 +99,8 @@ def main(output_dir: str, source_type: str, feature_types_to_correlate: str):
                 download_pdb_file(os.path.basename(r_b_pdb_filepath), r_b_pdb_filepath)
             assert os.path.exists(l_b_pdb_filepath) and os.path.exists(r_b_pdb_filepath), "Both left and right-bound PDB files collected must exist."
 
-            l_b_df0_feature_values = postprocessed_val_pair.df0[features_to_correlate].dropna()
-            r_b_df1_feature_values = postprocessed_val_pair.df1[features_to_correlate].dropna()
+            l_b_df0_feature_values = postprocessed_val_pair.df0[features_to_correlate].applymap(lambda x: np.nan if x == 'NA' else x).dropna().apply(pd.to_numeric)
+            r_b_df1_feature_values = postprocessed_val_pair.df1[features_to_correlate].applymap(lambda x: np.nan if x == 'NA' else x).dropna().apply(pd.to_numeric)
             val_feature_values.append(pd.concat([l_b_df0_feature_values, r_b_df1_feature_values]))
 
         # Train PDBs

@@ -14,7 +14,7 @@ from atom3 import database as db
 from tqdm import tqdm
 
 from project.utils.constants import DB5_TEST_PDB_CODES, ATOM_COUNT_LIMIT
-from project.utils.utils import download_pdb_file, get_global_node_rank
+from project.utils.utils import download_pdb_file, get_global_node_rank, gunzip_file
 
 
 FOLDSEEK_DEFAULT_TAB_COLUMNS = [
@@ -34,13 +34,6 @@ FOLDSEEK_DEFAULT_TAB_COLUMNS = [
     "lddt",
     "alntmscore",
 ]
-
-
-def gunzip_file(file_path):
-    try:
-        subprocess.run(['gunzip', file_path], check=True)
-    except subprocess.CalledProcessError as e:
-        print('gunzip error:', e)
 
 
 def partition_filenames_by_sequence(output_dir: str, source_type: str, filter_by_atom_count: bool, max_atom_count: int):
@@ -122,7 +115,7 @@ def copy_pdb_chain_dicts_to_temp_directory(pdb_chain_dicts: List[Dict[str, Any]]
     os.makedirs(destination_dir, exist_ok=True)
 
     # Iterate over the list of file dictionaries
-    for pdb_chain_dict in pdb_chain_dicts:
+    for pdb_chain_dict in tqdm(pdb_chain_dicts):
         l_pdb_filepath = pdb_chain_dict["l_pdb_filepath"]
         r_pdb_filepath = pdb_chain_dict["r_pdb_filepath"]
         l_chain = pdb_chain_dict["l_chain"]
@@ -166,7 +159,7 @@ def run_foldseek_easy_search(input_directory, reference_directory, alignment_fil
 
     # Check if the command executed successfully
     if result.returncode != 0:
-        print(result.stderr)
+        logging.error(result.stderr)
         raise Exception('Error occurred while running FoldSeek\'s easy-search.')
 
     # Create a DataFrame from the alignment data
@@ -262,11 +255,17 @@ def partition_filenames_by_structure(
 
         # Collect (and, if necessary, extract) all training PDB files
         train_entries = []
+        error_pairs = []
         assert os.path.exists(pairs_postprocessed_train_txt), "DB5-Plus train filenames must be curated in advance to partition training and validation filenames."
         with open(pairs_postprocessed_train_txt, "r") as f:
             train_filenames = [line.strip() for line in f.readlines()]
-        for train_filename in train_filenames:
-            postprocessed_train_pair: pa.Pair = pd.read_pickle(os.path.join(output_dir, train_filename))
+        for train_filename in tqdm(train_filenames):
+            try:
+                postprocessed_train_pair: pa.Pair = pd.read_pickle(os.path.join(output_dir, train_filename))
+            except Exception as e:
+                logging.error(f"Could not open postprocessed training pair {os.path.join(output_dir, train_filename)} due to: {e}")
+                error_pairs.append(os.path.join(output_dir, train_filename))
+                continue
             pdb_code = postprocessed_train_pair.df0.pdb_name[0].split("_")[0][1:3]
             pdb_dir = os.path.join(Path(output_dir).parent.parent, "raw", "pdb", pdb_code)
             l_b_pdb_filepath = os.path.join(pdb_dir, postprocessed_train_pair.df0.pdb_name[0])
@@ -293,14 +292,20 @@ def partition_filenames_by_structure(
             if not os.path.exists(r_b_pdb_filepath):
                 download_pdb_file(os.path.basename(r_b_pdb_filepath), r_b_pdb_filepath)
             assert os.path.exists(l_b_pdb_filepath) and os.path.exists(r_b_pdb_filepath), "Both left and right-bound PDB files collected must exist."
+        logging.info("Finished collecting all training PDB filenames")
 
         # Collect (and, if necessary, extract) all validation PDB files
         val_entries = []
         assert os.path.exists(pairs_postprocessed_val_txt), "DB5-Plus validation filenames must be curated in advance to partition training and validation filenames."
         with open(pairs_postprocessed_val_txt, "r") as f:
             val_filenames = [line.strip() for line in f.readlines()]
-        for val_filename in val_filenames[:100]:
-            postprocessed_val_pair: pa.Pair = pd.read_pickle(os.path.join(output_dir, val_filename))
+        for val_filename in tqdm(val_filenames):
+            try:
+                postprocessed_val_pair: pa.Pair = pd.read_pickle(os.path.join(output_dir, val_filename))
+            except Exception as e:
+                logging.error(f"Could not open postprocessed validation pair {os.path.join(output_dir, val_filename)} due to: {e}")
+                error_pairs.append(os.path.join(output_dir, val_filename))
+                continue
             pdb_code = postprocessed_val_pair.df0.pdb_name[0].split("_")[0][1:3]
             pdb_dir = os.path.join(Path(output_dir).parent.parent, "raw", "pdb", pdb_code)
             l_b_pdb_filepath = os.path.join(pdb_dir, postprocessed_val_pair.df0.pdb_name[0])
@@ -327,6 +332,7 @@ def partition_filenames_by_structure(
             if not os.path.exists(r_b_pdb_filepath):
                 download_pdb_file(os.path.basename(r_b_pdb_filepath), r_b_pdb_filepath)
             assert os.path.exists(l_b_pdb_filepath) and os.path.exists(r_b_pdb_filepath), "Both left and right-bound PDB files collected must exist."
+        logging.info("Finished collecting all validation PDB filenames")
 
         # Collect all test PDB filepaths
         pairs_postprocessed_test_txt = pairs_postprocessed_test_txt.replace("DIPS", "DB5")
@@ -334,8 +340,13 @@ def partition_filenames_by_structure(
         with open(pairs_postprocessed_test_txt, "r") as f:
             test_filenames = [line.strip() for line in f.readlines()]
         test_entries = []
-        for test_filename in test_filenames:
-            postprocessed_test_pair: pa.Pair = pd.read_pickle(os.path.join(output_dir.replace("DIPS", "DB5"), test_filename))
+        for test_filename in tqdm(test_filenames):
+            try:
+                postprocessed_test_pair: pa.Pair = pd.read_pickle(os.path.join(output_dir.replace("DIPS", "DB5"), test_filename))
+            except Exception as e:
+                logging.error(f"Could not open postprocessed test pair {os.path.join(output_dir.replace('DIPS', 'DB5'), test_filename)} due to: {e}")
+                error_pairs.append(os.path.join(output_dir.replace('DIPS', 'DB5'), test_filename))
+                continue
             pdb_code = postprocessed_test_pair.df0.pdb_name[0].split("_")[0]
             pdb_dir = os.path.join(Path(output_dir).parent.as_posix().replace("DIPS", "DB5").replace("final", "raw"), pdb_code)
             l_u_pdb_filepath = os.path.join(pdb_dir, postprocessed_test_pair.df0.pdb_name[0])
@@ -354,6 +365,10 @@ def partition_filenames_by_structure(
             }
             test_entries.append(test_entry)
             assert os.path.exists(l_u_pdb_filepath) and os.path.exists(r_u_pdb_filepath), "Both left and right-unbound PDB files collected must exist."
+        logging.info("Finished collecting all test PDB filenames")
+
+        if len(error_pairs) > 0:
+            raise Exception(f"Encountered {len(error_pairs)} pair files that could not be successfully opened. Please inspect the integrity of the following files: {error_pairs}")
 
         # Organize all training, validation, and test PDB files in a shared temporary directory
         train_temp_dir = copy_pdb_chain_dicts_to_temp_directory(train_entries, temp_dir_name="train")
@@ -361,6 +376,7 @@ def partition_filenames_by_structure(
         test_temp_dir = copy_pdb_chain_dicts_to_temp_directory(test_entries, temp_dir_name="test")
         
         # Run FoldSeek on each collection of PDB files
+        logging.info("Running FoldSeek!")
         train_alignment_df = run_foldseek_easy_search(
             input_directory=os.path.join(train_temp_dir, "train"),
             reference_directory=os.path.join(test_temp_dir, "test"),
@@ -382,6 +398,7 @@ def partition_filenames_by_structure(
             temp_directory=os.path.join(test_temp_dir, "tmp_artifacts"),
             sensitivity_threshold=partition_criterion_search_sensitivity,
         )
+        logging.info("Finished running FoldSeek!")
 
         # Filter each collection of filepaths based on the results from FoldSeek,
         # driven by the user's choice of partitioning criterion and search sensitivity
@@ -419,6 +436,8 @@ def partition_filenames_by_structure(
         train_filenames_to_keep_frame.to_csv(pairs_postprocessed_train_txt, header=None, index=None, sep=' ', mode='w')
         val_filenames_to_keep_frame.to_csv(pairs_postprocessed_val_txt, header=None, index=None, sep=' ', mode='w')
         # test_filenames_to_keep_frame.to_csv(pairs_postprocessed_test_txt, header=None, index=None, sep=' ', mode='w')
+
+        logging.info("Finished recording all structurally-filtered files!")
         
     else:
         raise NotImplementedError(f"Source type {source_type} is currently not supported.")

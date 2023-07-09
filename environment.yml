@@ -64,6 +64,7 @@ dependencies:
   - cuda-visual-tools=11.6.1=0
   - cudatoolkit=11.7.0=hd8887f6_10
   - cudnn=8.8.0.121=h0800d71_0
+  - cycler=0.11.0=pyhd8ed1ab_0
   - debugpy=1.6.7=py38h8dc9893_0
   - decorator=5.1.1=pyhd8ed1ab_0
   - dgl=1.1.0.cu116=py38_0
@@ -95,6 +96,7 @@ dependencies:
   - jupyter_client=8.2.0=pyhd8ed1ab_0
   - jupyter_core=4.12.0=py38h578d9bd_0
   - kernel-headers_linux-64=2.6.32=he073ed8_15
+  - kiwisolver=1.4.4=py38h43d8883_1
   - lame=3.100=h166bdaf_1003
   - lcms2=2.15=hfd0df8a_0
   - ld_impl_linux-64=2.36.1=hea4e1c9_2
@@ -148,6 +150,8 @@ dependencies:
   - llvm-openmp=16.0.4=h4dfa4b3_0
   - lz4-c=1.9.4=h6a678d5_0
   - magma=2.6.2=hc72dce7_0
+  - matplotlib=3.3.2=0
+  - matplotlib-base=3.3.2=py38h5c7f4ab_1
   - matplotlib-inline=0.1.6=pyhd8ed1ab_0
   - mkl=2022.2.1=h84fe81f_16997
   - mpi=1.0=openmpi
@@ -183,6 +187,7 @@ dependencies:
   - pycparser=2.21=pyhd3eb1b0_0
   - pygments=2.15.1=pyhd8ed1ab_0
   - pyopenssl=23.1.1=pyhd8ed1ab_0
+  - pyparsing=3.1.0=pyhd8ed1ab_0
   - pysocks=1.7.1=py38h06a4308_0
   - python=3.8.16=he550d4f_1_cpython
   - python-dateutil=2.8.2=pyhd3eb1b0_0
@@ -213,7 +218,6 @@ dependencies:
   - typing_extensions=4.6.0=pyha770c72_0
   - urllib3=1.26.15=py38h06a4308_0
   - wcwidth=0.2.6=pyhd8ed1ab_0
-  - wget=1.20.3=ha56f1ee_1
   - wheel=0.38.4=py38h06a4308_0
   - xorg-libxau=1.0.11=hd590300_0
   - xorg-libxdmcp=1.1.3=h7f98852_0
@@ -231,6 +235,7 @@ dependencies:
       - git+https://github.com/amorehead/atom3.git@83987404ceed38a1f5a5abd517aa38128d0a4f2c
       - attrs==23.1.0
       - babel==2.12.1
+      - biopandas==0.5.0.dev0
       - cachetools==5.3.1
       - click==7.0
       - configparser==5.3.0
@@ -251,9 +256,13 @@ dependencies:
       - hickle==5.0.2
       - imagesize==1.4.1
       - install==1.3.5
+      - loguru==0.7.0
+      - looseversion==1.1.2
       - markdown==3.4.3
       - markupsafe==2.1.3
+      - mmtf-python==1.1.3
       - mpi4py==3.0.3
+      - msgpack==1.0.5
       - multidict==6.0.4
       - multiprocess==0.70.11.1
       - oauthlib==3.2.2
@@ -282,5 +291,6 @@ dependencies:
       - torchmetrics==0.5.1
       - wandb==0.12.2
       - werkzeug==2.3.6
+      - wget==3.2
       - yarl==1.9.2
       - yaspin==2.3.0

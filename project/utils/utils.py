@@ -1285,6 +1285,13 @@ def convert_pair_hdf5_to_hdf5_file(hdf5_filepath: Path) -> h5py.File:
     return data
 
 
+def gunzip_file(file_path):
+    try:
+        subprocess.run(['gunzip', file_path], check=True)
+    except subprocess.CalledProcessError as e:
+        logging.error('gunzip error:', e)
+
+
 def remove_digits_from_filename(filename):
     pattern = r'\d+$'  # Matches one or more digits at the end of the string
     result = re.sub(pattern, '', filename)

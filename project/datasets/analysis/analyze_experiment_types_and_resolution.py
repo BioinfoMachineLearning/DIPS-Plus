@@ -63,7 +63,9 @@ def plot_mean_std_freq(means, stds, freqs, title):
 @click.argument('output_dir', default='../DIPS/final/raw', type=click.Path())
 @click.option('--source_type', default='rcsb', type=click.Choice(['rcsb', 'db5']))
 def main(output_dir: str, source_type: str):
-    logging.info("Analyzing interfaces within each dataset example...")
+    logger = logging.getLogger(__name__)
+    logger.info("Analyzing experiment types and resolution for each dataset example...")
+
     if source_type.lower() == "rcsb":
         train_metadata_csv_filepath = os.path.join(output_dir, "train_pdb_metadata.csv")
         val_metadata_csv_filepath = os.path.join(output_dir, "val_pdb_metadata.csv")
@@ -76,7 +78,6 @@ def main(output_dir: str, source_type: str):
 
                 # Collect (and, if necessary, extract) all training PDB files
                 train_pdb_codes = []
-                error_pairs = []
                 pairs_postprocessed_train_txt = os.path.join(output_dir, 'pairs-postprocessed-train-before-structure-based-filtering.txt')
                 assert os.path.exists(pairs_postprocessed_train_txt), "DB5-Plus train filenames must be curated in advance to partition training and validation filenames."
                 with open(pairs_postprocessed_train_txt, "r") as f:
@@ -86,7 +87,6 @@ def main(output_dir: str, source_type: str):
                         postprocessed_train_pair: pa.Pair = pd.read_pickle(os.path.join(output_dir, train_filename))
                     except Exception as e:
                         logging.error(f"Could not open postprocessed training pair {os.path.join(output_dir, train_filename)} due to: {e}")
-                        error_pairs.append(os.path.join(output_dir, train_filename))
                         continue
                     pdb_code = postprocessed_train_pair.df0.pdb_name[0].split("_")[0][1:3]
                     pdb_dir = os.path.join(Path(output_dir).parent.parent, "raw", "pdb", pdb_code)
@@ -125,7 +125,6 @@ def main(output_dir: str, source_type: str):
                         postprocessed_val_pair: pa.Pair = pd.read_pickle(os.path.join(output_dir, val_filename))
                     except Exception as e:
                         logging.error(f"Could not open postprocessed validation pair {os.path.join(output_dir, val_filename)} due to: {e}")
-                        error_pairs.append(os.path.join(output_dir, val_filename))
                         continue
                     pdb_code = postprocessed_val_pair.df0.pdb_name[0].split("_")[0][1:3]
                     pdb_dir = os.path.join(Path(output_dir).parent.parent, "raw", "pdb", pdb_code)
@@ -189,11 +188,14 @@ def main(output_dir: str, source_type: str):
         freqs_train_val = train_val_pdbs_df['experiment_type'].value_counts()
         plot_mean_std_freq(means_train_val, stds_train_val, freqs_train_val, 'Resolution vs. Experiment Type (Train + Validation)')
 
-        logging.info("Finished analyzing all training and validation PDBs")
+        logger.info("Finished analyzing experiment types and resolution for all training and validation PDBs")
 
     else:
         raise NotImplementedError(f"Source type {source_type} is currently not supported.")
 
 
 if __name__ == "__main__":
+    log_fmt = '%(asctime)s %(levelname)s %(process)d: %(message)s'
+    logging.basicConfig(level=logging.INFO, format=log_fmt)
+
     main()

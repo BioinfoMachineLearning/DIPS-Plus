@@ -87,7 +87,11 @@ def main(output_dir: str, source_type: str, interfacing_water_distance_cutoff: f
                         residue = int(residue)
                     else:
                         residue = (" ", int(residue_index), residue_icode)
-                target_residue = chain[residue]
+                try:
+                    target_residue = chain[residue]
+                except Exception as e:
+                    logging.error(f"Could not locate residue {residue} within chain {chain} for the left-bound training structure {l_b_pdb_filepath}. Skipping...")
+                    continue
                 target_coords = np.array([atom.get_coord() for atom in target_residue.get_atoms() if atom.get_name() == 'CA']).squeeze()
                 interfacing_atoms = l_b_ns.search(target_coords, interfacing_water_distance_cutoff, 'A')
                 waters_within_threshold = [atom for atom in interfacing_atoms if atom.get_parent().get_resname() in ['HOH', 'WAT']]
@@ -104,7 +108,11 @@ def main(output_dir: str, source_type: str, interfacing_water_distance_cutoff: f
                 else:
                     residue_index, residue_icode = residue[:-1], residue[-1:]
                     residue = (" ", int(residue_index), residue_icode)
-                target_residue = chain[residue]
+                try:
+                    target_residue = chain[residue]
+                except Exception as e:
+                    logging.error(f"Could not locate residue {residue} within chain {chain} for the right-bound training structure {r_b_pdb_filepath}. Skipping...")
+                    continue
                 target_coords = np.array([atom.get_coord() for atom in target_residue.get_atoms() if atom.get_name() == 'CA']).squeeze()
                 interfacing_atoms = r_b_ns.search(target_coords, interfacing_water_distance_cutoff, 'A')
                 waters_within_threshold = [atom for atom in interfacing_atoms if atom.get_parent().get_resname() in ['HOH', 'WAT']]
@@ -164,7 +172,11 @@ def main(output_dir: str, source_type: str, interfacing_water_distance_cutoff: f
                 else:
                     residue_index, residue_icode = residue[:-1], residue[-1:]
                     residue = (" ", int(residue_index), residue_icode)
-                target_residue = chain[residue]
+                try:
+                    target_residue = chain[residue]
+                except Exception as e:
+                    logging.error(f"Could not locate residue {residue} within chain {chain} for the left-bound validation structure {l_b_pdb_filepath}. Skipping...")
+                    continue
                 target_coords = np.array([atom.get_coord() for atom in target_residue.get_atoms() if atom.get_name() == 'CA']).squeeze()
                 interfacing_atoms = l_b_ns.search(target_coords, interfacing_water_distance_cutoff, 'A')
                 waters_within_threshold = [atom for atom in interfacing_atoms if atom.get_parent().get_resname() in ['HOH', 'WAT']]
@@ -181,7 +193,11 @@ def main(output_dir: str, source_type: str, interfacing_water_distance_cutoff: f
                 else:
                     residue_index, residue_icode = residue[:-1], residue[-1:]
                     residue = (" ", int(residue_index), residue_icode)
-                target_residue = chain[residue]
+                try:
+                    target_residue = chain[residue]
+                except Exception as e:
+                    logging.error(f"Could not locate residue {residue} within chain {chain} for the right-bound validation structure {r_b_pdb_filepath}. Skipping...")
+                    continue
                 target_coords = np.array([atom.get_coord() for atom in target_residue.get_atoms() if atom.get_name() == 'CA']).squeeze()
                 interfacing_atoms = r_b_ns.search(target_coords, interfacing_water_distance_cutoff, 'A')
                 waters_within_threshold = [atom for atom in interfacing_atoms if atom.get_parent().get_resname() in ['HOH', 'WAT']]

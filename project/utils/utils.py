@@ -1326,7 +1326,7 @@ def download_pdb_file(pdb_filename, save_path, obsolete_pdb=False):
         download_pdb_file(remove_digits_from_filename(pdb_filename), save_path, obsolete_pdb=True)
 
 
-def add_new_feature(pickle_filepaths: List[Path], graphein_feature_to_add: str, graphein_feature_name_mapping: Dict[str, str]):
+def add_new_feature(pickle_filepaths: List[Path], modify_pair_data: bool, graphein_feature_to_add: str, graphein_feature_name_mapping: Dict[str, str]):
     # Process each pickle file input    
     for pickle_filepath in pickle_filepaths:
         # Load pickle file
@@ -1393,27 +1393,30 @@ def add_new_feature(pickle_filepaths: List[Path], graphein_feature_to_add: str, 
         ), "Number of graphs' nodes must match number of number of DataFrames' residues for feature insertion."
 
         # Insert new features into existing DataFrames
-        new_l_feature_values = [d[graphein_feature_name_mapping[graphein_feature_to_add]] for _, d in l_graph.nodes(data=True)]
-        new_r_feature_values = [d[graphein_feature_name_mapping[graphein_feature_to_add]] for _, d in r_graph.nodes(data=True)]
-        if new_l_feature_values[0].shape[-1] == 1:
-            pair_data.sequences.update({
-                f"l_{graphein_feature_to_add}": value
-                for value in new_l_feature_values
-            })
-            pair_data.sequences.update({
-                f"r_{graphein_feature_to_add}": value
-                for value in new_r_feature_values
-            })
-        else:
-            new_l_feature_columns = new_l_feature_values[0].index.values.tolist()
-            new_r_feature_columns = new_r_feature_values[0].index.values.tolist()
-            assert new_l_feature_columns == new_r_feature_columns, "New feature columns must match between left and right PDBs."
-            new_feature_columns = new_l_feature_columns
-            pair_data.df0.loc[pair_data.df0.atom_name == "CA", new_feature_columns] = new_l_feature_values
-            pair_data.df1.loc[pair_data.df1.atom_name == "CA", new_feature_columns] = new_r_feature_values
+        try:
+            new_l_feature_values = [d[graphein_feature_name_mapping[graphein_feature_to_add]] for _, d in l_graph.nodes(data=True)]
+            new_r_feature_values = [d[graphein_feature_name_mapping[graphein_feature_to_add]] for _, d in r_graph.nodes(data=True)]
+            if new_l_feature_values[0].shape[-1] == 1:
+                pair_data.sequences.update({
+                    f"l_{graphein_feature_to_add}": value
+                    for value in new_l_feature_values
+                })
+                pair_data.sequences.update({
+                    f"r_{graphein_feature_to_add}": value
+                    for value in new_r_feature_values
+                })
+            else:
+                new_l_feature_columns = new_l_feature_values[0].index.values.tolist()
+                new_r_feature_columns = new_r_feature_values[0].index.values.tolist()
+                assert new_l_feature_columns == new_r_feature_columns, "New feature columns must match between left and right PDBs."
+                new_feature_columns = new_l_feature_columns
+                pair_data.df0.loc[pair_data.df0.atom_name == "CA", new_feature_columns] = new_l_feature_values
+                pair_data.df1.loc[pair_data.df1.atom_name == "CA", new_feature_columns] = new_r_feature_values
+        except Exception as e:
+            logging.error(f"Failed to insert new feature {graphein_feature_to_add} into both {l_pdb_filepath} and {r_pdb_filepath} due to: {e}. Skipping, but be aware...")
                 
         # Record new feature values within pickle file
-        if modifying_pair:
+        if modify_pair_data:
             with open(str(pickle_filepath), 'wb') as f:
                 dill.dump(pair_data, f)
 

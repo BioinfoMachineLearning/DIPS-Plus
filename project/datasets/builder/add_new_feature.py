@@ -9,14 +9,18 @@ from pathlib import Path
 
 from project.utils.utils import add_new_feature
 
-GRAPHEIN_FEATURE_NAME_MAPPING = {"expasy_protein_scale": "expasy"}
+GRAPHEIN_FEATURE_NAME_MAPPING = {
+    # TODO: Fill out remaining mappings for available Graphein residue-level features
+    "expasy_protein_scale": "expasy",
+}
 
 
 @click.command()
 @click.argument('raw_data_dir', default='../DIPS/final/raw', type=click.Path(exists=True))
 @click.option('--num_cpus', '-c', default=1)
+@click.option('--modify_pair_data/--dry_run_only', '-m', default=False)
 @click.option('--graphein_feature_to_add', default='expasy_protein_scale', type=str)
-def main(raw_data_dir: str, num_cpus: int, graphein_feature_to_add: str):
+def main(raw_data_dir: str, num_cpus: int, modify_pair_data: bool, graphein_feature_to_add: str):
     # Validate requested feature function
     assert (
         hasattr(graphein.protein.features.nodes.amino_acid, graphein_feature_to_add)
@@ -52,6 +56,7 @@ def main(raw_data_dir: str, num_cpus: int, graphein_feature_to_add: str):
     # Process each chunk of file paths in parallel
     parallel_fn = partial(
         add_new_feature,
+        modify_pair_data=modify_pair_data,
         graphein_feature_to_add=graphein_feature_to_add,
         graphein_feature_name_mapping=GRAPHEIN_FEATURE_NAME_MAPPING
     )

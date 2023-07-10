@@ -1,6 +1,7 @@
 import collections as col
 import copy
 import dill
+import graphein
 import gzip
 import h5py
 import logging
@@ -13,7 +14,7 @@ import tempfile
 import urllib.request as request
 from contextlib import closing
 from pathlib import Path
-from typing import List
+from typing import Dict, List
 
 import atom3.database as db
 import atom3.neighbors as nb
@@ -24,6 +25,7 @@ import hickle as hkl
 import numpy as np
 import pandas as pd
 import torch
+
 from Bio import SeqIO
 from Bio.PDB import Selection
 from Bio.PDB.DSSP import dssp_dict_from_pdb_file, DSSP
@@ -33,8 +35,11 @@ from Bio.PDB.vectors import Vector
 from Bio.SCOP.Raf import protein_letters_3to1
 from atom3.complex import Complex
 from atom3.utils import slice_list
+from graphein.protein.config import ProteinGraphConfig
+from graphein.protein.graphs import construct_graph
 from mpi4py import MPI
 from scipy import spatial
+from shutil import copyfile
 from sklearn.preprocessing import MinMaxScaler
 from torch import FloatTensor
 from tqdm import tqdm
@@ -1319,6 +1324,98 @@ def download_pdb_file(pdb_filename, save_path, obsolete_pdb=False):
     if not download_succeeded and not obsolete_pdb:
         # Try downloading the default (non-biological assembly) version of an obsolete PDB structure
         download_pdb_file(remove_digits_from_filename(pdb_filename), save_path, obsolete_pdb=True)
+
+
+def add_new_feature(pickle_filepaths: List[Path], graphein_feature_to_add: str, graphein_feature_name_mapping: Dict[str, str]):
+    # Process each pickle file input    
+    for pickle_filepath in pickle_filepaths:
+        # Load pickle file
+        try:
+            with open(str(pickle_filepath), 'rb') as f:
+                pair_data = dill.load(f)
+        except Exception as e:
+            logging.error(f"Failed to load pickle file {pickle_filepath} due to: {e}")
+            with open("feature_insertion_errors.txt", "a") as f:
+                f.write(str(pickle_filepath) + "\n")
+            continue
+
+        # Identify location of input PDBs
+        pdb_code = pair_data.df0.pdb_name[0].split("_")[0][1:3]
+        pdb_dir = os.path.join(Path(pickle_filepath).parent.parent.parent.parent, "raw", "pdb", pdb_code)
+        l_pdb_filepath = os.path.join(pdb_dir, pair_data.df0.pdb_name[0])
+        r_pdb_filepath = os.path.join(pdb_dir, pair_data.df1.pdb_name[0])
+        l_df0_chains = pair_data.df0.chain.unique()
+        r_df1_chains = pair_data.df1.chain.unique()
+        assert (
+            len(pair_data.df0.pdb_name.unique()) == len(l_df0_chains) == 1
+        ), "Only a single PDB filename and chain identifier can be associated with a single example."
+        assert (
+            len(pair_data.df1.pdb_name.unique()) == len(r_df1_chains) == 1
+        ), "Only a single PDB filename and chain identifier can be associated with a single example."
+        if not os.path.exists(l_pdb_filepath) and os.path.exists(l_pdb_filepath + ".gz"):
+            gunzip_file(l_pdb_filepath)
+        if not os.path.exists(r_pdb_filepath) and os.path.exists(r_pdb_filepath + ".gz"):
+            gunzip_file(r_pdb_filepath)
+        if not os.path.exists(l_pdb_filepath):
+            download_pdb_file(os.path.basename(l_pdb_filepath), l_pdb_filepath)
+        if not os.path.exists(r_pdb_filepath):
+            download_pdb_file(os.path.basename(r_pdb_filepath), r_pdb_filepath)
+        assert os.path.exists(l_pdb_filepath) and os.path.exists(r_pdb_filepath), "Both left and right-bound PDB files collected must exist."
+
+        l_df_residues = pair_data.df0[pair_data.df0.atom_name == "CA"]
+        r_df_residues = pair_data.df1[pair_data.df1.atom_name == "CA"]
+
+        # Organize temporary PDB filepaths
+        l_pdb_base_filepath = Path(l_pdb_filepath).with_suffix(".pdb")
+        r_pdb_base_filepath = Path(r_pdb_filepath).with_suffix(".pdb")
+        copyfile(l_pdb_filepath, str(l_pdb_base_filepath))
+        copyfile(r_pdb_filepath, str(r_pdb_base_filepath))
+
+        # Construct protein graphs using Graphein
+        try:
+            graph_feature_fn = getattr(graphein.protein.features.nodes.amino_acid, graphein_feature_to_add)
+            graph_construction_args = {"node_metadata_functions": [graph_feature_fn]}
+            graph_construction_config = ProteinGraphConfig(**graph_construction_args)
+            l_graph = construct_graph(config=graph_construction_config, path=str(l_pdb_base_filepath), chain_selection=[l_df0_chains[0]])
+            r_graph = construct_graph(config=graph_construction_config, path=str(r_pdb_base_filepath), chain_selection=[r_df1_chains[0]])
+            # Clean up temporary PDB filepaths
+            os.remove(l_pdb_base_filepath) if os.path.exists(l_pdb_base_filepath) else None
+            os.remove(r_pdb_base_filepath) if os.path.exists(r_pdb_base_filepath) else None
+        except Exception as e:
+            # Clean up temporary PDB filepaths
+            logging.error(f"Could not load l_pdb_base_filepath {str(l_pdb_base_filepath)} and r_pdb_base_filepath {str(r_pdb_base_filepath)} for graph construction due to: {e}")
+            os.remove(l_pdb_base_filepath) if os.path.exists(l_pdb_base_filepath) else None
+            os.remove(r_pdb_base_filepath) if os.path.exists(r_pdb_base_filepath) else None
+
+        # Subset graphs to only residues contained in each respective partnering chain
+        assert (
+            l_graph.number_of_nodes() == len(l_df_residues) and r_graph.number_of_nodes() == len(r_df_residues)
+        ), "Number of graphs' nodes must match number of number of DataFrames' residues for feature insertion."
+
+        # Insert new features into existing DataFrames
+        new_l_feature_values = [d[graphein_feature_name_mapping[graphein_feature_to_add]] for _, d in l_graph.nodes(data=True)]
+        new_r_feature_values = [d[graphein_feature_name_mapping[graphein_feature_to_add]] for _, d in r_graph.nodes(data=True)]
+        if new_l_feature_values[0].shape[-1] == 1:
+            pair_data.sequences.update({
+                f"l_{graphein_feature_to_add}": value
+                for value in new_l_feature_values
+            })
+            pair_data.sequences.update({
+                f"r_{graphein_feature_to_add}": value
+                for value in new_r_feature_values
+            })
+        else:
+            new_l_feature_columns = new_l_feature_values[0].index.values.tolist()
+            new_r_feature_columns = new_r_feature_values[0].index.values.tolist()
+            assert new_l_feature_columns == new_r_feature_columns, "New feature columns must match between left and right PDBs."
+            new_feature_columns = new_l_feature_columns
+            pair_data.df0.loc[pair_data.df0.atom_name == "CA", new_feature_columns] = new_l_feature_values
+            pair_data.df1.loc[pair_data.df1.atom_name == "CA", new_feature_columns] = new_r_feature_values
+                
+        # Record new feature values within pickle file
+        if modifying_pair:
+            with open(str(pickle_filepath), 'wb') as f:
+                dill.dump(pair_data, f)
 
 
 def annotate_idr_residues(pickle_filepaths: List[Path]):

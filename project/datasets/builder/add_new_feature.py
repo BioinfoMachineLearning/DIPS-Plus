@@ -1,17 +1,27 @@
 import click
+import graphein
 import logging
 import multiprocessing
 import os
 
+from functools import partial
 from pathlib import Path
 
-from project.utils.utils import annotate_idr_residues
+from project.utils.utils import add_new_feature
+
+GRAPHEIN_FEATURE_NAME_MAPPING = {"expasy_protein_scale": "expasy"}
 
 
 @click.command()
 @click.argument('raw_data_dir', default='../DIPS/final/raw', type=click.Path(exists=True))
 @click.option('--num_cpus', '-c', default=1)
-def main(raw_data_dir: str, num_cpus: int):
+@click.option('--graphein_feature_to_add', default='expasy_protein_scale', type=str)
+def main(raw_data_dir: str, num_cpus: int, graphein_feature_to_add: str):
+    # Validate requested feature function
+    assert (
+        hasattr(graphein.protein.features.nodes.amino_acid, graphein_feature_to_add)
+    ), f"Graphein must provide the requested node featurization function {graphein_feature_to_add}"
+
     # Collect paths of files to modify
     raw_data_dir = Path(raw_data_dir)
     raw_data_pickle_filepaths = []
@@ -22,7 +32,7 @@ def main(raw_data_dir: str, num_cpus: int):
                     if file.endswith('.dill'):
                         raw_data_pickle_filepaths.append(raw_data_dir / dir / file)
 
-    # Annotate whether each residue resides in an IDR, using multiprocessing #
+    # Add to each file the values corresponding to a new feature, using multiprocessing #
     # Define the number of processes to use
     num_processes = min(num_cpus, multiprocessing.cpu_count())
     
@@ -40,7 +50,12 @@ def main(raw_data_dir: str, num_cpus: int):
     pool = multiprocessing.Pool(processes=num_processes)
     
     # Process each chunk of file paths in parallel
-    pool.map(annotate_idr_residues, file_path_chunks)
+    parallel_fn = partial(
+        add_new_feature,
+        graphein_feature_to_add=graphein_feature_to_add,
+        graphein_feature_name_mapping=GRAPHEIN_FEATURE_NAME_MAPPING
+    )
+    pool.map(parallel_fn, file_path_chunks)
     
     # Close the pool and wait for all processes to finish
     pool.close()

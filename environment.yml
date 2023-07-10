@@ -150,8 +150,6 @@ dependencies:
   - llvm-openmp=16.0.4=h4dfa4b3_0
   - lz4-c=1.9.4=h6a678d5_0
   - magma=2.6.2=hc72dce7_0
-  - matplotlib=3.3.2=0
-  - matplotlib-base=3.3.2=py38h5c7f4ab_1
   - matplotlib-inline=0.1.6=pyhd8ed1ab_0
   - mkl=2022.2.1=h84fe81f_16997
   - mpi=1.0=openmpi
@@ -164,8 +162,6 @@ dependencies:
   - ninja=1.11.1=h924138e_0
   - nsight-compute=2023.1.1.4=0
   - numexpr=2.8.4=py38hd2a5715_1
-  - numpy=1.24.3=py38hf838250_0
-  - numpy-base=1.24.3=py38h1e6e340_0
   - openh264=2.1.1=h780b84a_0
   - openjpeg=2.5.0=hfec8fc6_2
   - openmpi=4.1.5=h414af15_101
@@ -187,7 +183,6 @@ dependencies:
   - pycparser=2.21=pyhd3eb1b0_0
   - pygments=2.15.1=pyhd8ed1ab_0
   - pyopenssl=23.1.1=pyhd8ed1ab_0
-  - pyparsing=3.1.0=pyhd8ed1ab_0
   - pysocks=1.7.1=py38h06a4308_0
   - python=3.8.16=he550d4f_1_cpython
   - python-dateutil=2.8.2=pyhd3eb1b0_0
@@ -235,63 +230,103 @@ dependencies:
       - git+https://github.com/amorehead/atom3.git@83987404ceed38a1f5a5abd517aa38128d0a4f2c
       - attrs==23.1.0
       - babel==2.12.1
+      - beautifulsoup4==4.12.2
       - biopandas==0.5.0.dev0
+      - bioservices==1.11.2
       - cachetools==5.3.1
+      - cattrs==23.1.2
       - click==7.0
+      - colorlog==6.7.0
       - configparser==5.3.0
+      - contourpy==1.1.0
+      - deepdiff==6.3.1
       - dill==0.3.3
       - docker-pycreds==0.4.0
       - docutils==0.17.1
       - easy-parallel-py3==0.1.6.4
+      - easydev==0.12.1
+      - exceptiongroup==1.1.2
       - fairscale==0.4.0
+      - fonttools==4.40.0
       - frozenlist==1.3.3
       - fsspec==2023.5.0
       - future==0.18.3
+      - gevent==22.10.2
       - gitdb==4.0.10
       - gitpython==3.1.31
       - google-auth==2.19.0
       - google-auth-oauthlib==1.0.0
+      - git+https://github.com/a-r-j/graphein.git@371ce9a462b610529488e87a712484328a89de36
+      - greenlet==2.0.2
+      - grequests==0.7.0
       - grpcio==1.54.2
       - h5py==3.8.0
       - hickle==5.0.2
       - imagesize==1.4.1
+      - importlib-resources==6.0.0
       - install==1.3.5
+      - jaxtyping==0.2.19
+      - jinja2==2.11.3
       - loguru==0.7.0
       - looseversion==1.1.2
+      - lxml==4.9.3
       - markdown==3.4.3
-      - markupsafe==2.1.3
+      - markdown-it-py==3.0.0
+      - markupsafe==1.1.1
+      - matplotlib==3.7.2
+      - mdurl==0.1.2
       - mmtf-python==1.1.3
       - mpi4py==3.0.3
       - msgpack==1.0.5
       - multidict==6.0.4
+      - multipledispatch==1.0.0
       - multiprocess==0.70.11.1
+      - numpy==1.23.5
       - oauthlib==3.2.2
+      - ordered-set==4.1.0
       - pathos==0.2.7
       - pathtools==0.1.2
       - pdb-tools==2.5.0
+      - platformdirs==3.8.1
+      - plotly==5.15.0
       - pox==0.3.2
       - ppft==1.7.6.6
       - promise==2.3
       - protobuf==3.20.3
       - pyasn1==0.5.0
       - pyasn1-modules==0.3.0
+      - pydantic==1.10.11
       - pydeprecate==0.3.1
+      - pyparsing==3.0.9
       - pytorch-lightning==1.4.8
-      - pyyaml==6.0
+      - pyyaml==5.4.1
+      - requests-cache==1.1.0
       - requests-oauthlib==1.3.1
+      - rich==13.4.2
+      - rich-click==1.6.1
       - rsa==4.9
       - seaborn==0.12.2
       - sentry-sdk==1.24.0
       - shortuuid==1.0.11
       - smmap==5.0.0
       - snowballstemmer==2.2.0
+      - soupsieve==2.4.1
       - subprocess32==3.5.4
+      - suds-community==1.1.2
+      - tenacity==8.2.2
       - tensorboard==2.13.0
       - tensorboard-data-server==0.7.0
       - termcolor==2.3.0
       - torchmetrics==0.5.1
+      - typeguard==4.0.0
+      - url-normalize==1.4.3
       - wandb==0.12.2
       - werkzeug==2.3.6
       - wget==3.2
+      - wrapt==1.15.0
+      - xarray==2023.1.0
+      - xmltodict==0.13.0
       - yarl==1.9.2
       - yaspin==2.3.0
+      - zope-event==5.0
+      - zope-interface==6.0

@@ -256,7 +256,7 @@ def partition_filenames_by_structure(
         # Collect (and, if necessary, extract) all training PDB files
         train_entries = []
         error_pairs = []
-        assert os.path.exists(pairs_postprocessed_train_txt), "DB5-Plus train filenames must be curated in advance to partition training and validation filenames."
+        assert os.path.exists(pairs_postprocessed_train_txt), "DIPS-Plus train filenames must be curated in advance to partition training and validation filenames."
         with open(pairs_postprocessed_train_txt, "r") as f:
             train_filenames = [line.strip() for line in f.readlines()]
         for train_filename in tqdm(train_filenames):
@@ -296,7 +296,7 @@ def partition_filenames_by_structure(
 
         # Collect (and, if necessary, extract) all validation PDB files
         val_entries = []
-        assert os.path.exists(pairs_postprocessed_val_txt), "DB5-Plus validation filenames must be curated in advance to partition training and validation filenames."
+        assert os.path.exists(pairs_postprocessed_val_txt), "DIPS-Plus validation filenames must be curated in advance to partition training and validation filenames."
         with open(pairs_postprocessed_val_txt, "r") as f:
             val_filenames = [line.strip() for line in f.readlines()]
         for val_filename in tqdm(val_filenames):

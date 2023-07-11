@@ -1376,8 +1376,8 @@ def add_new_feature(pickle_filepaths: List[Path], modify_pair_data: bool, graphe
             graph_feature_fn = getattr(graphein.protein.features.nodes.amino_acid, graphein_feature_to_add)
             graph_construction_args = {"node_metadata_functions": [graph_feature_fn]}
             graph_construction_config = ProteinGraphConfig(**graph_construction_args)
-            l_graph = construct_graph(config=graph_construction_config, path=str(l_pdb_base_filepath), chain_selection=[l_df0_chains[0]])
-            r_graph = construct_graph(config=graph_construction_config, path=str(r_pdb_base_filepath), chain_selection=[r_df1_chains[0]])
+            l_graph = construct_graph(config=graph_construction_config, path=str(l_pdb_base_filepath), chain_selection=[l_df0_chains[0]], verbose=False)
+            r_graph = construct_graph(config=graph_construction_config, path=str(r_pdb_base_filepath), chain_selection=[r_df1_chains[0]], verbose=False)
             # Clean up temporary PDB filepaths
             os.remove(l_pdb_base_filepath) if os.path.exists(l_pdb_base_filepath) else None
             os.remove(r_pdb_base_filepath) if os.path.exists(r_pdb_base_filepath) else None

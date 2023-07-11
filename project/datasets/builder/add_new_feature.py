@@ -1,3 +1,10 @@
+import warnings
+
+from pandas.errors import SettingWithCopyWarning
+
+warnings.simplefilter("ignore", category=FutureWarning)
+warnings.simplefilter("ignore", category=SettingWithCopyWarning)
+
 import click
 import graphein
 import logging

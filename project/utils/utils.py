@@ -1386,6 +1386,7 @@ def add_new_feature(pickle_filepaths: List[Path], modify_pair_data: bool, graphe
             logging.error(f"Could not load l_pdb_base_filepath {str(l_pdb_base_filepath)} and r_pdb_base_filepath {str(r_pdb_base_filepath)} for graph construction due to: {e}")
             os.remove(l_pdb_base_filepath) if os.path.exists(l_pdb_base_filepath) else None
             os.remove(r_pdb_base_filepath) if os.path.exists(r_pdb_base_filepath) else None
+            continue
 
         # Subset graphs to only residues contained in each respective partnering chain
         l_b_node_ids = l_df_residues.apply(lambda row: f'{row["chain"].strip()}:{row["resname"].strip()}:{row["residue"].strip()}', axis=1).values.tolist()
@@ -1394,9 +1395,13 @@ def add_new_feature(pickle_filepaths: List[Path], modify_pair_data: bool, graphe
         l_b_node_ids += [node_id for node_id in list(l_graph.nodes) if node_id not in l_b_node_ids]
         r_b_node_ids += [node_id for node_id in list(r_graph.nodes) if node_id not in r_b_node_ids]
         l_graph, r_graph = l_graph.subgraph(l_b_node_ids), r_graph.subgraph(r_b_node_ids)
-        assert (
-            l_graph.number_of_nodes() == len(l_df_residues) and r_graph.number_of_nodes() == len(r_df_residues)
-        ), f"For PDB inputs {l_pdb_filepath} and {r_pdb_filepath}, number of graphs' nodes {l_graph.number_of_nodes() + r_graph.number_of_nodes()} must match number of DataFrames' residues {len(l_df_residues) + len(r_df_residues)} for feature insertion."
+        try:
+            assert (
+                l_graph.number_of_nodes() == len(l_df_residues) and r_graph.number_of_nodes() == len(r_df_residues)
+            ), f"For PDB inputs {l_pdb_filepath} and {r_pdb_filepath}, number of graphs' nodes {l_graph.number_of_nodes() + r_graph.number_of_nodes()} must match number of DataFrames' residues {len(l_df_residues) + len(r_df_residues)} for feature insertion."
+        except Exception as e:
+            logging.error(f"For PDB inputs {l_pdb_filepath} and {r_pdb_filepath}, number of graphs' nodes {l_graph.number_of_nodes() + r_graph.number_of_nodes()} did not match number of DataFrames' residues {len(l_df_residues) + len(r_df_residues)} for feature insertion. Please manually inspect this complex to ensure its new feature values are correctly defined.")
+            continue
 
         # Insert new features into existing DataFrames
         try:
@@ -1420,6 +1425,7 @@ def add_new_feature(pickle_filepaths: List[Path], modify_pair_data: bool, graphe
                 pair_data.df1.loc[pair_data.df1.atom_name == "CA", new_feature_columns] = new_r_feature_values
         except Exception as e:
             logging.error(f"Failed to insert new feature {graphein_feature_to_add} into both {l_pdb_filepath} and {r_pdb_filepath} due to: {e}. Skipping, but be aware...")
+            continue
                 
         # Record new feature values within pickle file
         if modify_pair_data:

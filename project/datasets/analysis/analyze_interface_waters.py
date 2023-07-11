@@ -73,50 +73,50 @@ def main(output_dir: str, source_type: str, interfacing_water_distance_cutoff: f
 
             train_num_complexes += 1
 
-            l_b_ns = NeighborSearch(list(l_b_structure.get_atoms()))
-            for index, row in l_b_interface_residues.iterrows():
-                chain_id = row['chain']
-                residue = row['residue'].strip()
-                model = l_b_structure[0]
-                chain = model[chain_id]
-                if residue.lstrip("-").isdigit():
-                    residue = int(residue)
-                else:
-                    residue_index, residue_icode = residue[:-1], residue[-1:]
-                    if residue_icode.strip() == "":
+            try:
+                l_b_ns = NeighborSearch(list(l_b_structure.get_atoms()))
+                for index, row in l_b_interface_residues.iterrows():
+                    chain_id = row['chain']
+                    residue = row['residue'].strip()
+                    model = l_b_structure[0]
+                    chain = model[chain_id]
+                    if residue.lstrip("-").isdigit():
                         residue = int(residue)
                     else:
-                        residue = (" ", int(residue_index), residue_icode)
-                try:
+                        residue_index, residue_icode = residue[:-1], residue[-1:]
+                        if residue_icode.strip() == "":
+                            residue = int(residue)
+                        else:
+                            residue = (" ", int(residue_index), residue_icode)
                     target_residue = chain[residue]
-                except Exception as e:
-                    logging.error(f"Could not locate residue {residue} within chain {chain} for the left-bound training structure {l_b_pdb_filepath} due to: {e}. Skipping...")
-                    continue
-                target_coords = np.array([atom.get_coord() for atom in target_residue.get_atoms() if atom.get_name() == 'CA']).squeeze()
-                interfacing_atoms = l_b_ns.search(target_coords, interfacing_water_distance_cutoff, 'A')
-                waters_within_threshold = [atom for atom in interfacing_atoms if atom.get_parent().get_resname() in ['HOH', 'WAT']]
-                train_complex_num_waters += len(waters_within_threshold)
+                    target_coords = np.array([atom.get_coord() for atom in target_residue.get_atoms() if atom.get_name() == 'CA']).squeeze()
+                    interfacing_atoms = l_b_ns.search(target_coords, interfacing_water_distance_cutoff, 'A')
+                    waters_within_threshold = [atom for atom in interfacing_atoms if atom.get_parent().get_resname() in ['HOH', 'WAT']]
+                    train_complex_num_waters += len(waters_within_threshold)
+            except Exception as e:
+                logging.error(f"Unable to locate interface waters for left-bound training structure {l_b_pdb_filepath} due to: {e}. Skipping...")
+                continue
 
-            r_b_ns = NeighborSearch(list(r_b_structure.get_atoms()))
-            for index, row in r_b_interface_residues.iterrows():
-                chain_id = row['chain']
-                residue = row['residue'].strip()
-                model = r_b_structure[0]
-                chain = model[chain_id]
-                if residue.lstrip("-").isdigit():
-                    residue = int(residue)
-                else:
-                    residue_index, residue_icode = residue[:-1], residue[-1:]
-                    residue = (" ", int(residue_index), residue_icode)
-                try:
+            try:
+                r_b_ns = NeighborSearch(list(r_b_structure.get_atoms()))
+                for index, row in r_b_interface_residues.iterrows():
+                    chain_id = row['chain']
+                    residue = row['residue'].strip()
+                    model = r_b_structure[0]
+                    chain = model[chain_id]
+                    if residue.lstrip("-").isdigit():
+                        residue = int(residue)
+                    else:
+                        residue_index, residue_icode = residue[:-1], residue[-1:]
+                        residue = (" ", int(residue_index), residue_icode)
                     target_residue = chain[residue]
-                except Exception as e:
-                    logging.error(f"Could not locate residue {residue} within chain {chain} for the right-bound training structure {r_b_pdb_filepath} due to: {e}. Skipping...")
-                    continue
-                target_coords = np.array([atom.get_coord() for atom in target_residue.get_atoms() if atom.get_name() == 'CA']).squeeze()
-                interfacing_atoms = r_b_ns.search(target_coords, interfacing_water_distance_cutoff, 'A')
-                waters_within_threshold = [atom for atom in interfacing_atoms if atom.get_parent().get_resname() in ['HOH', 'WAT']]
-                train_complex_num_waters += len(waters_within_threshold)
+                    target_coords = np.array([atom.get_coord() for atom in target_residue.get_atoms() if atom.get_name() == 'CA']).squeeze()
+                    interfacing_atoms = r_b_ns.search(target_coords, interfacing_water_distance_cutoff, 'A')
+                    waters_within_threshold = [atom for atom in interfacing_atoms if atom.get_parent().get_resname() in ['HOH', 'WAT']]
+                    train_complex_num_waters += len(waters_within_threshold)
+            except Exception as e:
+                logging.error(f"Unable to locate interface waters for right-bound training structure {r_b_pdb_filepath} due to: {e}. Skipping...")
+                continue
 
         # Collect (and, if necessary, extract) all validation PDB files
         val_num_complexes = 0
@@ -161,47 +161,47 @@ def main(output_dir: str, source_type: str, interfacing_water_distance_cutoff: f
 
             val_num_complexes += 1
 
-            l_b_ns = NeighborSearch(list(l_b_structure.get_atoms()))
-            for index, row in l_b_interface_residues.iterrows():
-                chain_id = row['chain']
-                residue = row['residue'].strip()
-                model = l_b_structure[0]
-                chain = model[chain_id]
-                if residue.lstrip("-").isdigit():
-                    residue = int(residue)
-                else:
-                    residue_index, residue_icode = residue[:-1], residue[-1:]
-                    residue = (" ", int(residue_index), residue_icode)
-                try:
+            try:
+                l_b_ns = NeighborSearch(list(l_b_structure.get_atoms()))
+                for index, row in l_b_interface_residues.iterrows():
+                    chain_id = row['chain']
+                    residue = row['residue'].strip()
+                    model = l_b_structure[0]
+                    chain = model[chain_id]
+                    if residue.lstrip("-").isdigit():
+                        residue = int(residue)
+                    else:
+                        residue_index, residue_icode = residue[:-1], residue[-1:]
+                        residue = (" ", int(residue_index), residue_icode)
                     target_residue = chain[residue]
-                except Exception as e:
-                    logging.error(f"Could not locate residue {residue} within chain {chain} for the left-bound validation structure {l_b_pdb_filepath} due to: {e}. Skipping...")
-                    continue
-                target_coords = np.array([atom.get_coord() for atom in target_residue.get_atoms() if atom.get_name() == 'CA']).squeeze()
-                interfacing_atoms = l_b_ns.search(target_coords, interfacing_water_distance_cutoff, 'A')
-                waters_within_threshold = [atom for atom in interfacing_atoms if atom.get_parent().get_resname() in ['HOH', 'WAT']]
-                val_complex_num_waters += len(waters_within_threshold)
+                    target_coords = np.array([atom.get_coord() for atom in target_residue.get_atoms() if atom.get_name() == 'CA']).squeeze()
+                    interfacing_atoms = l_b_ns.search(target_coords, interfacing_water_distance_cutoff, 'A')
+                    waters_within_threshold = [atom for atom in interfacing_atoms if atom.get_parent().get_resname() in ['HOH', 'WAT']]
+                    val_complex_num_waters += len(waters_within_threshold)
+            except Exception as e:
+                logging.error(f"Unable to locate interface waters for left-bound validation structure {l_b_pdb_filepath} due to: {e}. Skipping...")
+                continue
 
-            r_b_ns = NeighborSearch(list(r_b_structure.get_atoms()))
-            for index, row in r_b_interface_residues.iterrows():
-                chain_id = row['chain']
-                residue = row['residue'].strip()
-                model = r_b_structure[0]
-                chain = model[chain_id]
-                if residue.lstrip("-").isdigit():
-                    residue = int(residue)
-                else:
-                    residue_index, residue_icode = residue[:-1], residue[-1:]
-                    residue = (" ", int(residue_index), residue_icode)
-                try:
+            try:
+                r_b_ns = NeighborSearch(list(r_b_structure.get_atoms()))
+                for index, row in r_b_interface_residues.iterrows():
+                    chain_id = row['chain']
+                    residue = row['residue'].strip()
+                    model = r_b_structure[0]
+                    chain = model[chain_id]
+                    if residue.lstrip("-").isdigit():
+                        residue = int(residue)
+                    else:
+                        residue_index, residue_icode = residue[:-1], residue[-1:]
+                        residue = (" ", int(residue_index), residue_icode)
                     target_residue = chain[residue]
-                except Exception as e:
-                    logging.error(f"Could not locate residue {residue} within chain {chain} for the right-bound validation structure {r_b_pdb_filepath} due to: {e}. Skipping...")
-                    continue
-                target_coords = np.array([atom.get_coord() for atom in target_residue.get_atoms() if atom.get_name() == 'CA']).squeeze()
-                interfacing_atoms = r_b_ns.search(target_coords, interfacing_water_distance_cutoff, 'A')
-                waters_within_threshold = [atom for atom in interfacing_atoms if atom.get_parent().get_resname() in ['HOH', 'WAT']]
-                val_complex_num_waters += len(waters_within_threshold)
+                    target_coords = np.array([atom.get_coord() for atom in target_residue.get_atoms() if atom.get_name() == 'CA']).squeeze()
+                    interfacing_atoms = r_b_ns.search(target_coords, interfacing_water_distance_cutoff, 'A')
+                    waters_within_threshold = [atom for atom in interfacing_atoms if atom.get_parent().get_resname() in ['HOH', 'WAT']]
+                    val_complex_num_waters += len(waters_within_threshold)
+            except Exception as e:
+                logging.error(f"Unable to locate interface waters for right-bound validation structure {r_b_pdb_filepath} due to: {e}. Skipping...")
+                continue
 
         # Train complexes
         train_num_waters_per_complex = train_complex_num_waters / train_num_complexes

@@ -1388,9 +1388,15 @@ def add_new_feature(pickle_filepaths: List[Path], modify_pair_data: bool, graphe
             os.remove(r_pdb_base_filepath) if os.path.exists(r_pdb_base_filepath) else None
 
         # Subset graphs to only residues contained in each respective partnering chain
+        l_b_node_ids = l_df_residues.apply(lambda row: f'{row["chain"].strip()}:{row["resname"].strip()}:{row["residue"].strip()}', axis=1).values.tolist()
+        r_b_node_ids = r_df_residues.apply(lambda row: f'{row["chain"].strip()}:{row["resname"].strip()}:{row["residue"].strip()}', axis=1).values.tolist()
+        # note: some node IDs do not cleanly map between DataFrames and graphs
+        l_b_node_ids += [node_id for node_id in list(l_graph.nodes) if node_id not in l_b_node_ids]
+        r_b_node_ids += [node_id for node_id in list(r_graph.nodes) if node_id not in r_b_node_ids]
+        l_graph, r_graph = l_graph.subgraph(l_b_node_ids), r_graph.subgraph(r_b_node_ids)
         assert (
             l_graph.number_of_nodes() == len(l_df_residues) and r_graph.number_of_nodes() == len(r_df_residues)
-        ), "Number of graphs' nodes must match number of number of DataFrames' residues for feature insertion."
+        ), f"For PDB inputs {l_pdb_filepath} and {r_pdb_filepath}, number of graphs' nodes {l_graph.number_of_nodes() + r_graph.number_of_nodes()} must match number of DataFrames' residues {len(l_df_residues) + len(r_df_residues)} for feature insertion."
 
         # Insert new features into existing DataFrames
         try:

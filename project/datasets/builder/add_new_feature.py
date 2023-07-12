@@ -8,8 +8,10 @@ warnings.simplefilter("ignore", category=SettingWithCopyWarning)
 import click
 import graphein
 import logging
+import loguru
 import multiprocessing
 import os
+import sys
 
 from functools import partial
 from pathlib import Path
@@ -32,6 +34,11 @@ def main(raw_data_dir: str, num_cpus: int, modify_pair_data: bool, graphein_feat
     assert (
         hasattr(graphein.protein.features.nodes.amino_acid, graphein_feature_to_add)
     ), f"Graphein must provide the requested node featurization function {graphein_feature_to_add}"
+
+    # Disable DEBUG messages coming from Graphein
+    loguru.logger.disable("graphein")
+    loguru.logger.remove()
+    loguru.logger.add(lambda message: message["level"].name != "DEBUG")
 
     # Collect paths of files to modify
     raw_data_dir = Path(raw_data_dir)
@@ -65,7 +72,7 @@ def main(raw_data_dir: str, num_cpus: int, modify_pair_data: bool, graphein_feat
         add_new_feature,
         modify_pair_data=modify_pair_data,
         graphein_feature_to_add=graphein_feature_to_add,
-        graphein_feature_name_mapping=GRAPHEIN_FEATURE_NAME_MAPPING
+        graphein_feature_name_mapping=GRAPHEIN_FEATURE_NAME_MAPPING,
     )
     pool.map(parallel_fn, file_path_chunks)
     

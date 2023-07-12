@@ -1,6 +1,11 @@
 import click
 import logging
 import os
+import warnings
+
+from hickle.lookup import SerializedWarning
+
+warnings.simplefilter("ignore", category=SerializedWarning)
 
 from pathlib import Path
 from parallel import submit_jobs

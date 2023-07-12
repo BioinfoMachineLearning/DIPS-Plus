@@ -216,29 +216,29 @@ def main(output_dir: str, source_type: str, interfacing_water_distance_cutoff: f
 
         # Training data distribution
         plt.subplot(131)  # 1 row, 3 columns, plot 1 (leftmost)
-        plt.hist(train_complex_num_waters, bins=10, color='blue')
-        plt.axvline(training_mean, color='red', linestyle='dashed', linewidth=2)
-        plt.text(training_mean + 0.1, plt.ylim()[1] * 0.9, f'Mean: {training_mean:.2f}', color='red')
+        plt.hist(train_complex_num_waters, bins=10, color='royalblue')
+        plt.axvline(training_mean, color='limegreen', linestyle='dashed', linewidth=2)
+        plt.text(training_mean + 0.1, plt.ylim()[1] * 0.9, f'   Mean: {training_mean:.2f}', color='limegreen')
         plt.title('Train Interface Waters')
-        plt.xlabel('Counts')
+        plt.xlabel('Count')
         plt.ylabel('Frequency')
 
         # Validation data distribution
         plt.subplot(132)  # 1 row, 3 columns, plot 2 (middle)
-        plt.hist(val_complex_num_waters, bins=10, color='green')
-        plt.axvline(validation_mean, color='red', linestyle='dashed', linewidth=2)
-        plt.text(validation_mean + 0.1, plt.ylim()[1] * 0.9, f'Mean: {validation_mean:.2f}', color='red')
+        plt.hist(val_complex_num_waters, bins=10, color='royalblue')
+        plt.axvline(validation_mean, color='limegreen', linestyle='dashed', linewidth=2)
+        plt.text(validation_mean + 0.1, plt.ylim()[1] * 0.9, f'   Mean: {validation_mean:.2f}', color='limegreen')
         plt.title('Validation Interface Waters')
-        plt.xlabel('Counts')
+        plt.xlabel('Count')
         plt.ylabel('Frequency')
 
         # Combined data distribution
         plt.subplot(133)  # 1 row, 3 columns, plot 3 (rightmost)
-        plt.hist(train_val_complex_num_waters, bins=10, color='orange')
-        plt.axvline(training_validation_mean, color='red', linestyle='dashed', linewidth=2)
-        plt.text(training_validation_mean + 0.1, plt.ylim()[1] * 0.9, f'Mean: {training_validation_mean:.2f}', color='red')
-        plt.title('Train + Validation Interface Waters')
-        plt.xlabel('Counts')
+        plt.hist(train_val_complex_num_waters, bins=10, color='royalblue')
+        plt.axvline(training_validation_mean, color='limegreen', linestyle='dashed', linewidth=2)
+        plt.text(training_validation_mean + 0.1, plt.ylim()[1] * 0.9, f'   Mean: {training_validation_mean:.2f}', color='limegreen')
+        plt.title('Train+Validation Interface Waters')
+        plt.xlabel('Count')
         plt.ylabel('Frequency')
 
         plt.tight_layout()  # Adjust the spacing between subplots

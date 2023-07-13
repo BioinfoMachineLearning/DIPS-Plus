@@ -4,7 +4,7 @@
 
 The Enhanced Database of Interacting Protein Structures for Interface Prediction
 
-[![Paper](http://img.shields.io/badge/paper-arxiv.2106.04362-B31B1B.svg)](https://arxiv.org/abs/2106.04362)  [![CC BY 4.0][cc-by-shield]][cc-by] [![Primary Data DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5134732.svg)](https://doi.org/10.5281/zenodo.5134732) [![Supplementary Data DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8071136.svg)](https://doi.org/10.5281/zenodo.8071136)
+[![Paper](http://img.shields.io/badge/paper-arxiv.2106.04362-B31B1B.svg)](https://arxiv.org/abs/2106.04362)  [![CC BY 4.0][cc-by-shield]][cc-by] [![Primary Data DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5134732.svg)](https://doi.org/10.5281/zenodo.5134732) [![Supplementary Data DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8140981.svg)](https://doi.org/10.5281/zenodo.8140981)
 
 [cc-by]: http://creativecommons.org/licenses/by/4.0/
 [cc-by-image]: https://i.creativecommons.org/l/by/4.0/88x31.png
@@ -219,7 +219,7 @@ python3 project/datasets/builder/generate_hhsuite_features.py "$PROJDIR"/project
 # (1) Pull down the Docker image for `flDPnn`
 docker pull docker.io/sinaghadermarzi/fldpnn
 # (2) For all sequences in the dataset, predict which interface residues reside within IDRs
-python3 project/datasets/builder/annotate_idr_interfaces.py "$PROJDIR"/project/datasets/DIPS/final/raw
+python3 project/datasets/builder/annotate_idr_interfaces.py "$PROJDIR"/project/datasets/DIPS/final/raw --num_cpus 16
 
 # Add new features to the filtered pairs, ensuring that the pruned pairs' original PDB files are stored locally for DSSP:
 python3 project/datasets/builder/download_missing_pruned_pair_pdbs.py "$PROJDIR"/project/datasets/DIPS/raw/pdb "$PROJDIR"/project/datasets/DIPS/interim/pairs-pruned --num_cpus 32 --rank "$1" --size "$2"

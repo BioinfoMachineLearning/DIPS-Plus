@@ -132,6 +132,9 @@ tar -xzf project/datasets/DB5/final/final_raw_db5.tar.gz -C project/datasets/DB5
 python3 notebooks/data_usage.py
 ```
 
+## How to split data using FoldSeek
+We provide users with the [ability](https://github.com/BioinfoMachineLearning/DIPS-Plus/blob/75775d98f0923faf11fb50639eb58cd510a10ffd/project/datasets/builder/partition_dataset_filenames.py#L486) to perform structure-based splits of the complexes in DIPS-Plus using FoldSeek. This script is designed to allow users to customize how stringent one would like FoldSeek's searches to be for structure-based splitting. Moreover, we provide standardized structure-based splits of DIPS-Plus' complexes in the corresponding [supplementary Zenodo data record](https://zenodo.org/record/8140981).
+
 ## How to featurize DIPS-Plus complexes using Graphein
 In the new [graph featurization script](https://github.com/BioinfoMachineLearning/DIPS-Plus/blob/main/project/datasets/builder/add_new_feature.py), we provide an example of how users may install new Expasy protein scale features using the Graphein library. The script is designed to be amenable to simple user customization such that users can use this script to insert arbitrary new Graphein-based features into each DIPS-Plus complex's pair file, for downstream tasks.
 

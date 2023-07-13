@@ -132,6 +132,9 @@ tar -xzf project/datasets/DB5/final/final_raw_db5.tar.gz -C project/datasets/DB5
 python3 notebooks/data_usage.py
 ```
 
+## How to featurize DIPS-Plus complexes using Graphein
+In the new [graph featurization script](https://github.com/BioinfoMachineLearning/DIPS-Plus/blob/main/project/datasets/builder/add_new_feature.py), we provide an example of how users may install new Expasy protein scale features using the Graphein library. The script is designed to be amenable to simple user customization such that users can use this script to insert arbitrary new Graphein-based features into each DIPS-Plus complex's pair file, for downstream tasks.
+
 ## Standard DIPS-Plus directory structure
 
 ```

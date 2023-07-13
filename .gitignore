@@ -126,7 +126,7 @@ project/datasets/DIPS/parsed/**
 project/datasets/DIPS/raw/**
 project/datasets/DIPS/final/raw/**
 project/datasets/DIPS/final/load_pair_example.py
-project/datasets/DIPS/final/final_raw_dips.tar.gz*
+project/datasets/DIPS/final/final_raw_dips*.tar.gz*
 project/datasets/DIPS/final/processed/**
 
 # DB5

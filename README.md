@@ -26,6 +26,7 @@ The Enhanced Database of Interacting Protein Structures for Interface Prediction
     * Benchmark results included in our paper were run after this issue was resolved
     * However, if you ran experiments using DB5-Plus' filename list for its test complexes, please re-run them using the latest list
 * Version 1.2.0: Minor additions to DIPS-Plus tar archives, including new residue-level intrinsic disorder region annotations and raw Jackhmmer-small BFD MSAs (Supplementary Data DOI: 10.5281/zenodo.8071136)
+* Version 1.3.0: Minor additions to DIPS-Plus tar archives, including new FoldSeek-based structure-focused training and validation splits, residue-level (scalar) disorder propensities, and a Graphein-based featurization pipeline (Supplementary Data DOI: 10.5281/zenodo.8140981)
 
 ## How to set up
 

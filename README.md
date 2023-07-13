@@ -4,7 +4,7 @@
 
 The Enhanced Database of Interacting Protein Structures for Interface Prediction
 
-[![Paper](http://img.shields.io/badge/paper-arxiv.2106.04362-B31B1B.svg)](https://arxiv.org/abs/2106.04362)  [![CC BY 4.0][cc-by-shield]][cc-by] [![Primary Data DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5134732.svg)](https://doi.org/10.5281/zenodo.5134732) [![Supplementary Data DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8071136.svg)](https://doi.org/10.5281/zenodo.8071136)
+[![Paper](http://img.shields.io/badge/paper-arxiv.2106.04362-B31B1B.svg)](https://arxiv.org/abs/2106.04362)  [![CC BY 4.0][cc-by-shield]][cc-by] [![Primary Data DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5134732.svg)](https://doi.org/10.5281/zenodo.5134732) [![Supplementary Data DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8140981.svg)](https://doi.org/10.5281/zenodo.8140981)
 
 [cc-by]: http://creativecommons.org/licenses/by/4.0/
 [cc-by-image]: https://i.creativecommons.org/l/by/4.0/88x31.png

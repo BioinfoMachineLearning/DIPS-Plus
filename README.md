@@ -4,7 +4,7 @@
 
 The Enhanced Database of Interacting Protein Structures for Interface Prediction
 
-[![Paper](http://img.shields.io/badge/paper-arxiv.2106.04362-B31B1B.svg)](https://arxiv.org/abs/2106.04362)  [![CC BY 4.0][cc-by-shield]][cc-by] [![Primary Data DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5134732.svg)](https://doi.org/10.5281/zenodo.5134732) [![Supplementary Data DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8140981.svg)](https://doi.org/10.5281/zenodo.8140981)
+[![Paper](http://img.shields.io/badge/paper-arxiv.2106.04362-B31B1B.svg)](https://www.nature.com/articles/s41597-023-02409-3)  [![CC BY 4.0][cc-by-shield]][cc-by] [![Primary Data DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5134732.svg)](https://doi.org/10.5281/zenodo.5134732) [![Supplementary Data DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8140981.svg)](https://doi.org/10.5281/zenodo.8140981)
 
 [cc-by]: http://creativecommons.org/licenses/by/4.0/
 [cc-by-image]: https://i.creativecommons.org/l/by/4.0/88x31.png
@@ -320,12 +320,14 @@ block in the Unpickler class' find_class() function
 If you find DIPS-Plus useful in your research, please cite:
 
 ```bibtex
-@misc{morehead2021dipsplus,
-      title={DIPS-Plus: The Enhanced Database of Interacting Protein Structures for Interface Prediction}, 
-      author={Alex Morehead and Chen Chen and Ada Sedova and Jianlin Cheng},
-      year={2021},
-      eprint={2106.04362},
-      archivePrefix={arXiv},
-      primaryClass={q-bio.QM}
+@article{morehead2023dips,
+  title={DIPS-Plus: The enhanced database of interacting protein structures for interface prediction},
+  author={Morehead, Alex and Chen, Chen and Sedova, Ada and Cheng, Jianlin},
+  journal={Scientific Data},
+  volume={10},
+  number={1},
+  pages={509},
+  year={2023},
+  publisher={Nature Publishing Group UK London}
 }
 ```
